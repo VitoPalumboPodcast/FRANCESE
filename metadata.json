@@ -1,0 +1,7 @@
+{
+  "name": "Impératif Master",
+  "description": "Un'app eccezionale per padroneggiare l'imperativo francese con l'aiuto dell'AI.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
