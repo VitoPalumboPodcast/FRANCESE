@@ -1,92 +1,149 @@
+
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import LearnView from './components/LearnView';
 import QuizView from './components/QuizView';
 import RoleplayView from './components/RoleplayView';
-import { ViewState } from './types';
-import { Sparkles } from 'lucide-react';
+import { ViewState, TopicId, ModuleData } from './types';
+import { Sparkles, BookOpen, MessageSquare, Lock, ArrowRight, Check } from 'lucide-react';
 
-const Dashboard: React.FC<{ setView: (v: ViewState) => void }> = ({ setView }) => (
-  <div className="p-6 md:p-10 max-w-6xl mx-auto">
-    <div className="mb-12 text-center md:text-left">
-      <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-4">
-        Bonjour, <span className="text-french-blue">Étudiant</span>.
+// Course Data
+const modules: ModuleData[] = [
+    {
+        id: TopicId.COD,
+        title: "1. Pronomi COD",
+        description: "Impara a dire 'Lo mangio', 'La guardo' invece di ripetere i nomi.",
+        icon: "🍎",
+        unlocked: true,
+        progress: 80
+    },
+    {
+        id: TopicId.IMPERATIF,
+        title: "2. L'Imperativo",
+        description: "Dai ordini e consigli. Attenzione: qui i pronomi cambiano posto!",
+        icon: "👉",
+        unlocked: true,
+        progress: 30
+    },
+    {
+        id: 'FUTURO' as TopicId, // Placeholder for future expansion
+        title: "3. Il Futuro (Prossimamente)",
+        description: "Cosa farai domani? Impara a progettare.",
+        icon: "🔮",
+        unlocked: false,
+        progress: 0
+    }
+];
+
+const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => void }> = ({ onSelectModule }) => (
+  <div className="p-6 md:p-10 max-w-5xl mx-auto pb-32">
+    <div className="mb-12 text-center">
+      <h1 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 mb-4">
+        Corso di Francese
       </h1>
-      <p className="text-lg text-slate-600 max-w-2xl">
-        Pronto a padroneggiare l'arte del comando? L'imperativo è la chiave per farsi ascoltare in Francia.
+      <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+        Un percorso passo dopo passo. Padroneggia i pronomi prima di affrontare l'imperativo.
       </p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <button 
-        onClick={() => setView(ViewState.LEARN)}
-        className="group relative overflow-hidden bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 text-left"
-      >
-        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-          <span className="text-9xl font-serif text-french-blue">1</span>
-        </div>
-        <h3 className="text-2xl font-bold text-slate-800 mb-2 group-hover:text-french-blue transition-colors">Le Basi</h3>
-        <p className="text-slate-500 mb-6">Grammatica, eccezioni e pronomi.</p>
-        <div className="inline-flex items-center text-french-blue font-bold text-sm uppercase tracking-wide">
-          Inizia <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-        </div>
-      </button>
+    <div className="space-y-8 relative before:absolute before:left-8 md:before:left-1/2 before:top-10 before:bottom-10 before:w-1 before:bg-slate-200 before:-z-10">
+      {modules.map((module, index) => (
+        <div key={module.id} className={`flex flex-col md:flex-row items-center gap-8 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+          
+          {/* Connector Dot */}
+          <div className="absolute left-8 md:left-1/2 w-4 h-4 bg-white border-4 border-slate-300 rounded-full -translate-x-1.5 md:-translate-x-2"></div>
 
-      <button 
-        onClick={() => setView(ViewState.QUIZ)}
-        className="group relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 text-left text-white"
-      >
-        <div className="absolute top-4 right-4">
-          <Sparkles className="text-yellow-400 animate-pulse" />
-        </div>
-        <h3 className="text-2xl font-bold mb-2">Mettiti alla prova</h3>
-        <p className="text-slate-300 mb-6">Quiz generati dall'AI infiniti.</p>
-        <div className="inline-flex items-center text-white font-bold text-sm uppercase tracking-wide opacity-80 group-hover:opacity-100">
-          Gioca <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-        </div>
-      </button>
+          {/* Content Card */}
+          <div className={`flex-1 w-full md:w-[calc(50%-2rem)] ${!module.unlocked && 'opacity-60 grayscale pointer-events-none'}`}>
+             <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+                {/* Progress Bar Background */}
+                <div className="absolute bottom-0 left-0 h-1.5 bg-slate-100 w-full">
+                    <div className="h-full bg-green-400" style={{width: `${module.progress}%`}}></div>
+                </div>
 
-      <button 
-        onClick={() => setView(ViewState.ROLEPLAY)}
-        className="group relative overflow-hidden bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 text-left"
-      >
-         <div className="absolute top-0 right-0 w-32 h-32 bg-french-red rounded-full blur-3xl opacity-5 group-hover:opacity-10 transition-opacity -mr-10 -mt-10"></div>
-        <h3 className="text-2xl font-bold text-slate-800 mb-2 group-hover:text-french-red transition-colors">Sfida Pierre</h3>
-        <p className="text-slate-500 mb-6">Simulazione reale con un Robot scontroso.</p>
-        <div className="inline-flex items-center text-french-red font-bold text-sm uppercase tracking-wide">
-          Chatta <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                <div className="flex justify-between items-start mb-4">
+                    <span className="text-4xl shadow-sm bg-slate-50 rounded-2xl w-16 h-16 flex items-center justify-center border border-slate-100">
+                        {module.unlocked ? module.icon : <Lock size={24} className="text-slate-400"/>}
+                    </span>
+                    {module.unlocked && module.progress === 100 && (
+                        <div className="bg-green-100 text-green-700 p-2 rounded-full"><Check size={16} strokeWidth={3}/></div>
+                    )}
+                </div>
+
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">{module.title}</h3>
+                <p className="text-slate-500 mb-6">{module.description}</p>
+
+                {module.unlocked ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        <button 
+                            onClick={() => onSelectModule(module.id, ViewState.LEARN)}
+                            className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 text-french-blue hover:bg-french-blue hover:text-white transition-colors"
+                        >
+                            <BookOpen size={20} className="mb-1"/>
+                            <span className="text-xs font-bold uppercase">Studia</span>
+                        </button>
+                        <button 
+                            onClick={() => onSelectModule(module.id, ViewState.QUIZ)}
+                            className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
+                        >
+                            <Sparkles size={20} className="mb-1"/>
+                            <span className="text-xs font-bold uppercase">Quiz</span>
+                        </button>
+                        <button 
+                            onClick={() => onSelectModule(module.id, ViewState.ROLEPLAY)}
+                            className="flex flex-col items-center justify-center p-3 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-500 hover:text-white transition-colors"
+                        >
+                            <MessageSquare size={20} className="mb-1"/>
+                            <span className="text-xs font-bold uppercase">Chat</span>
+                        </button>
+                    </div>
+                ) : (
+                    <div className="w-full py-3 bg-slate-100 text-slate-400 rounded-xl text-center font-bold text-sm uppercase">
+                        Bloccato
+                    </div>
+                )}
+             </div>
+          </div>
+
+          {/* Spacer for layout balance */}
+          <div className="flex-1 hidden md:block"></div>
         </div>
-      </button>
+      ))}
     </div>
 
-    <div className="mt-12 p-8 bg-blue-50 rounded-3xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-6">
-      <div>
-        <h4 className="text-xl font-bold text-slate-800 mb-2">Il consiglio del giorno</h4>
-        <p className="text-slate-600 italic">"Per i verbi in -ER come 'Manger', ricorda di togliere la 's' alla seconda persona singolare: 'Mange !', non 'Manges !'."</p>
-      </div>
-      <div className="shrink-0">
-        <span className="text-4xl">🥐</span>
-      </div>
+    <div className="mt-20 text-center">
+        <button className="px-8 py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-slate-800 transition-all flex items-center mx-auto gap-2">
+            Sblocca Prossimi Livelli <ArrowRight size={20} />
+        </button>
     </div>
   </div>
 );
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.HOME);
+  const [activeTopic, setActiveTopic] = useState<TopicId>(TopicId.COD);
+
+  const handleModuleSelect = (topic: TopicId, view: ViewState) => {
+      setActiveTopic(topic);
+      setCurrentView(view);
+  };
+
+  const goBack = () => {
+      setCurrentView(ViewState.HOME);
+  }
 
   return (
     <div className="flex h-screen w-full bg-slate-50 font-sans">
       <Sidebar currentView={currentView} setView={setCurrentView} />
       
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
-        {/* Background elements */}
+      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative scroll-smooth">
         <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-20 pointer-events-none -z-10 translate-x-1/2 -translate-y-1/2"></div>
         
         <div className="h-full">
-          {currentView === ViewState.HOME && <Dashboard setView={setCurrentView} />}
-          {currentView === ViewState.LEARN && <LearnView />}
-          {currentView === ViewState.QUIZ && <QuizView />}
-          {currentView === ViewState.ROLEPLAY && <RoleplayView />}
+          {currentView === ViewState.HOME && <CourseMap onSelectModule={handleModuleSelect} />}
+          {currentView === ViewState.LEARN && <LearnView topicId={activeTopic} onBack={goBack} />}
+          {currentView === ViewState.QUIZ && <QuizView topicId={activeTopic} onBack={goBack} />}
+          {currentView === ViewState.ROLEPLAY && <RoleplayView topicId={activeTopic} onBack={goBack} />}
         </div>
       </main>
     </div>

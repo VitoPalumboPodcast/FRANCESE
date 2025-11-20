@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { ViewState } from '../types';
-import { BookOpen, CheckCircle, MessageSquare, Home, LogOut } from 'lucide-react';
+import { Map, BookOpen, LogOut, GraduationCap } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -8,52 +9,66 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
-  const menuItems = [
-    { id: ViewState.HOME, label: 'Dashboard', icon: Home },
-    { id: ViewState.LEARN, label: 'Lezioni', icon: BookOpen },
-    { id: ViewState.QUIZ, label: 'Quiz AI', icon: CheckCircle },
-    { id: ViewState.ROLEPLAY, label: 'Comanda Pierre', icon: MessageSquare },
-  ];
-
+  // Simplified sidebar as navigation is now mostly driven by the Course Map
+  // Keeping it for global context and potential future features (Settings, Profile)
+  
   return (
-    <div className="w-20 lg:w-64 h-screen bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 shadow-2xl z-50">
+    <div className="w-20 lg:w-64 h-screen bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 shadow-2xl z-50 shrink-0">
       <div>
-        <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
-          <div className="w-8 h-8 bg-french-red rounded-full flex items-center justify-center mr-0 lg:mr-3 shadow-[0_0_15px_rgba(239,65,53,0.5)]">
-            <span className="font-serif font-bold text-white">I</span>
+        <div className="h-24 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
+          <div className="w-10 h-10 bg-french-red rounded-xl flex items-center justify-center mr-0 lg:mr-3 shadow-[0_0_15px_rgba(239,65,53,0.5)] rotate-3 hover:rotate-0 transition-transform">
+            <span className="font-serif font-bold text-white text-xl">F</span>
           </div>
-          <span className="hidden lg:block font-serif font-bold text-xl tracking-wide">Impératif</span>
+          <div className="hidden lg:block">
+              <span className="font-serif font-bold text-xl tracking-wide block leading-none">Français</span>
+              <span className="text-xs text-slate-400 uppercase tracking-widest">Master Class</span>
+          </div>
         </div>
 
         <nav className="mt-8 space-y-2 px-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setView(item.id)}
-                className={`w-full flex items-center justify-center lg:justify-start px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-french-blue text-white shadow-lg shadow-blue-900/50 scale-105'
+           <button
+                onClick={() => setView(ViewState.HOME)}
+                className={`w-full flex items-center justify-center lg:justify-start px-4 py-4 rounded-2xl transition-all duration-200 group ${
+                  currentView === ViewState.HOME
+                    ? 'bg-french-blue text-white shadow-lg shadow-blue-900/50'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <Icon size={24} className={`lg:mr-3 ${isActive ? 'text-white' : 'group-hover:text-french-blue'}`} />
-                <span className="hidden lg:block font-medium">{item.label}</span>
-              </button>
-            );
-          })}
+                <Map size={24} className={`lg:mr-3 ${currentView === ViewState.HOME ? 'text-white' : 'group-hover:text-french-blue'}`} />
+                <span className="hidden lg:block font-medium text-lg">Mappa Corso</span>
+           </button>
+           
+           {currentView !== ViewState.HOME && (
+               <div className="mt-4 px-4 hidden lg:block animate-in fade-in duration-500">
+                   <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                       <p className="text-xs text-slate-400 uppercase mb-2">Stai studiando</p>
+                       <div className="flex items-center text-french-blue font-bold">
+                           <GraduationCap size={16} className="mr-2"/>
+                           Modulo Attivo
+                       </div>
+                   </div>
+               </div>
+           )}
         </nav>
       </div>
 
       <div className="p-4 border-t border-slate-800">
-        <div className="bg-slate-800 rounded-xl p-4 hidden lg:block">
-          <p className="text-xs text-slate-400 mb-1">Progresso Giornaliero</p>
-          <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
-            <div className="bg-green-400 h-2 rounded-full" style={{ width: '65%' }}></div>
+        <div className="bg-slate-800 rounded-xl p-4 hidden lg:block group hover:bg-slate-700 transition-colors cursor-pointer">
+          <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-500 flex items-center justify-center font-bold text-white">
+                  ET
+              </div>
+              <div>
+                  <p className="font-bold text-sm">Étudiant Top</p>
+                  <p className="text-xs text-slate-400">Livello: Principiante</p>
+              </div>
           </div>
-          <p className="text-right text-xs font-bold text-green-400">65%</p>
+          <div className="w-full bg-slate-900 rounded-full h-2">
+            <div className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all duration-1000" style={{ width: '45%' }}></div>
+          </div>
+        </div>
+        <div className="lg:hidden flex justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-purple-500"></div>
         </div>
       </div>
     </div>

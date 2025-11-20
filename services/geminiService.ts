@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { QuizQuestion, QuizDifficulty } from "../types";
+import { QuizQuestion, QuizDifficulty, TopicId } from "../types";
 
 // Initialize client only when needed to ensure API key is present
 const getAIClient = () => {
@@ -11,7 +12,7 @@ const getAIClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export const generateQuizQuestions = async (difficulty: QuizDifficulty, count: number = 3): Promise<QuizQuestion[]> => {
+export const generateQuizQuestions = async (topic: TopicId, difficulty: QuizDifficulty, count: number = 3): Promise<QuizQuestion[]> => {
   const ai = getAIClient();
   if (!ai) return [];
 
@@ -20,7 +21,7 @@ export const generateQuizQuestions = async (difficulty: QuizDifficulty, count: n
     items: {
       type: Type.OBJECT,
       properties: {
-        question: { type: Type.STRING, description: "The quiz question (e.g., 'Translate: Eat the apple!')." },
+        question: { type: Type.STRING, description: "The quiz question." },
         options: { type: Type.ARRAY, items: { type: Type.STRING }, description: "4 possible answers." },
         correctAnswer: { type: Type.STRING, description: "The correct option string." },
         explanation: { type: Type.STRING, description: "Brief explanation of the rule." }
@@ -29,10 +30,18 @@ export const generateQuizQuestions = async (difficulty: QuizDifficulty, count: n
     }
   };
 
-  const prompt = `Generate ${count} multiple-choice questions about the French Imperative Mode (L'Impératif). 
+  let topicContext = "";
+  if (topic === TopicId.IMPERATIF) {
+    topicContext = "French Imperative Mode (L'Impératif). Focus on Verb conjugation, Irregular verbs (Avoir, Venir, Etre), and Pronoun placement (COD after verb).";
+  } else if (topic === TopicId.COD) {
+    topicContext = "French Direct Object Pronouns (COD - Les pronoms compléments d'objet direct). Focus on: le, la, les, l', me, te, nous, vous. Rules: Placement BEFORE the verb (Je la regarde), Negation sandwich (Je ne la regarde pas), Elision (l').";
+  }
+
+  const prompt = `Generate ${count} multiple-choice questions about ${topicContext}.
   Difficulty: ${difficulty}.
-  Focus on: Verb conjugation (ER/IR groups), Irregular verbs (Avoir, Venir, Etre), and Pronoun placement (COD, Reflexive).
-  The user is an Italian speaker, so questions/prompts should be in Italian, but answers in French.
+  The user is an Italian speaker learning French. 
+  Questions/Prompts should be in Italian (asking to translate or fill in the blank), but options/answers in French.
+  For COD questions, test specifically if they put the pronoun BEFORE the verb (unlike Italian where it can vary).
   Output strictly JSON.`;
 
   try {
@@ -55,56 +64,27 @@ export const generateQuizQuestions = async (difficulty: QuizDifficulty, count: n
   }
 };
 
-export const checkImperativeCommand = async (userCommand: string): Promise<{ isCorrect: boolean; feedback: string; improved: string }> => {
-  const ai = getAIClient();
-  if (!ai) return { isCorrect: false, feedback: "API Error", improved: "" };
-
-  const prompt = `Analyze this French sentence: "${userCommand}".
-  The user is trying to give a command using the Imperative Mood.
-  1. Is it grammatically correct in the Imperative?
-  2. If yes, say "Correct".
-  3. If no, explain why in Italian and provide the correct form.
-  
-  Return JSON: { "isCorrect": boolean, "feedback": string, "improved": string }`;
-
-  const schema: Schema = {
-      type: Type.OBJECT,
-      properties: {
-        isCorrect: { type: Type.BOOLEAN },
-        feedback: { type: Type.STRING },
-        improved: { type: Type.STRING }
-      }
-  }
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    });
-    
-    const text = response.text;
-    if(!text) throw new Error("No response");
-    return JSON.parse(text);
-
-  } catch (error) {
-     console.error("Error checking command:", error);
-     return { isCorrect: false, feedback: "Errore di connessione.", improved: "" };
-  }
-};
-
-export const getTutorResponse = async (history: {role: string, parts: {text: string}[]}[], userText: string) => {
+export const getTutorResponse = async (history: {role: string, parts: {text: string}[]}[], userText: string, topic: TopicId) => {
     const ai = getAIClient();
     if(!ai) return "Errore API";
 
-    const systemInstruction = `Sei "Pierre", un robot francese un po' snob ma simpatico. 
-    Obbedisci solo agli ordini dati correttamente all'imperativo francese.
-    Se l'utente sbaglia grammatica, lo correggi gentilmente in italiano ma ti rifiuti di eseguire l'ordine.
-    Se l'ordine è corretto, descrivi l'azione che fai in francese tra asterischi (es: *Je me lève rapidement*).
-    Rispondi in modo breve.`;
+    let systemInstruction = "";
+    
+    if (topic === TopicId.IMPERATIF) {
+        systemInstruction = `Sei "Pierre", un sergente istruttore robotico francese. 
+        Il tuo obiettivo è far esercitare l'utente sull'IMPERATIVO.
+        Chiedi all'utente di darti ordini.
+        Obbedisci solo agli ordini dati correttamente all'imperativo francese (es: "Fais ça!", "Mange-le!").
+        Se l'utente sbaglia (es: mette il pronome prima "Le mange"), correggilo severamente ma simpaticamente in italiano.
+        Rispondi in modo breve.`;
+    } else {
+        systemInstruction = `Sei "Pierre", un pettegolo robotico francese.
+        Il tuo obiettivo è far esercitare l'utente sui PRONOMI COD (le, la, les, l').
+        Fai domande all'utente su cosa gli piace o cosa fa (es: "Tu aimes la pizza?", "Tu regardes la télé?").
+        L'utente DEVE rispondere usando il pronome (es: "Oui, je l'aime", "Non, je ne la regarde pas").
+        Se ripete il nome (es: "J'aime la pizza"), correggilo dicendo che deve usare il pronome COD per non essere ripetitivo.
+        Parla un misto di francese facile e spiegazioni in italiano.`;
+    }
 
     const chat = ai.chats.create({
         model: 'gemini-2.5-flash',
