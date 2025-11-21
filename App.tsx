@@ -23,14 +23,30 @@ const modules: ModuleData[] = [
         description: "Dai ordini e consigli. Attenzione: qui i pronomi cambiano posto!",
         icon: "👉",
         unlocked: true,
-        progress: 30
+        progress: 50
     },
     {
-        id: 'FUTURO' as TopicId, // Placeholder for future expansion
-        title: "3. Il Futuro (Prossimamente)",
-        description: "Cosa farai domani? Impara a progettare.",
-        icon: "🔮",
-        unlocked: false,
+        id: TopicId.VERBI_IR, 
+        title: "3. Verbi in -IR (2° Gr.)",
+        description: "Finir, Choisir, Grossir. Il segreto è nel ponte 'ISS'.",
+        icon: "🚀",
+        unlocked: true,
+        progress: 20
+    },
+    {
+        id: TopicId.ORIENTATION,
+        title: "4. Orientamento",
+        description: "Scusi, per andare alla stazione? Impara a chiedere e dare indicazioni.",
+        icon: "🗺️",
+        unlocked: true,
+        progress: 10
+    },
+    {
+        id: TopicId.LYON, 
+        title: "5. Culture: Lyon",
+        description: "Un viaggio tra i fiumi, la gastronomia e il quartiere moderno Confluence.",
+        icon: "🏙️",
+        unlocked: true,
         progress: 0
     }
 ];
@@ -42,7 +58,7 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
         Corso di Francese
       </h1>
       <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-        Un percorso passo dopo passo. Padroneggia i pronomi prima di affrontare l'imperativo.
+        Un percorso passo dopo passo. Padroneggia i pronomi, l'imperativo e scopri la cultura francese.
       </p>
     </div>
 
@@ -80,7 +96,7 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
                             className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 text-french-blue hover:bg-french-blue hover:text-white transition-colors"
                         >
                             <BookOpen size={20} className="mb-1"/>
-                            <span className="text-xs font-bold uppercase">Studia</span>
+                            <span className="text-xs font-bold uppercase">Scopri</span>
                         </button>
                         <button 
                             onClick={() => onSelectModule(module.id, ViewState.QUIZ)}
@@ -94,7 +110,7 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
                             className="flex flex-col items-center justify-center p-3 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-500 hover:text-white transition-colors"
                         >
                             <MessageSquare size={20} className="mb-1"/>
-                            <span className="text-xs font-bold uppercase">Chat</span>
+                            <span className="text-xs font-bold uppercase">Guida</span>
                         </button>
                     </div>
                 ) : (

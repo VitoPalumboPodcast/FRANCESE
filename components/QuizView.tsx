@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateQuizQuestions } from '../services/geminiService';
 import { QuizQuestion, QuizDifficulty, TopicId } from '../types';
-import { Loader2, Check, X, Award, ArrowLeft } from 'lucide-react';
+import { Loader2, Check, X, Award, ArrowLeft, Volume2 } from 'lucide-react';
 
 interface QuizViewProps {
     topicId: TopicId;
@@ -18,6 +18,29 @@ const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
   const [showResult, setShowResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  // TTS Setup
+  useEffect(() => {
+       const load = () => setVoices(window.speechSynthesis.getVoices());
+       load();
+       window.speechSynthesis.onvoiceschanged = load;
+       return () => { window.speechSynthesis.onvoiceschanged = null; }
+    }, []);
+
+  const playAudio = (text: string) => {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/\//g, ',')); 
+      u.lang = 'fr-FR';
+      
+      const preferredVoice = voices.find(v => v.lang.startsWith('fr') && v.name.includes('Google')) ||
+                             voices.find(v => v.lang.startsWith('fr'));
+      
+      if (preferredVoice) u.voice = preferredVoice;
+      u.rate = 0.9;
+      u.pitch = 1.05; // Matching Pierre's vibe slightly
+      window.speechSynthesis.speak(u);
+  }
 
   const loadQuiz = async () => {
     setLoading(true);
@@ -185,8 +208,24 @@ const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
                <div className="flex items-center gap-2 mb-2 text-yellow-400 font-bold uppercase text-xs tracking-wide">
                     <Award size={14} /> Spiegazione
                </div>
-               <p className="leading-relaxed">{currentQ.explanation}</p>
+               <p className="leading-relaxed mb-4 text-slate-300">{currentQ.explanation}</p>
+               
+               {/* Example Section */}
+               <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600 flex items-start gap-3">
+                    <button 
+                        onClick={() => playAudio(currentQ.exampleSentence?.french || currentQ.correctAnswer)}
+                        className="bg-french-blue/20 text-french-blue p-3 rounded-full hover:bg-french-blue hover:text-white transition-colors shrink-0"
+                        title="Ascolta esempio"
+                    >
+                        <Volume2 size={20} />
+                    </button>
+                    <div>
+                        <p className="text-white font-serif italic text-lg">{currentQ.exampleSentence?.french}</p>
+                        <p className="text-slate-400 text-sm">{currentQ.exampleSentence?.italian}</p>
+                    </div>
+               </div>
              </div>
+             
              <button 
                onClick={nextQuestion}
                className="w-full py-4 bg-french-blue text-white rounded-2xl font-bold text-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-[1.02]"
