@@ -1,12 +1,13 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Send, Bot, User, ArrowLeft, RefreshCw, Mic, MicOff, AlertCircle, Dumbbell, ShieldAlert, MessageCircle, MapPin, Compass } from 'lucide-react';
+import { Send, Bot, User, ArrowLeft, RefreshCw, Mic, MicOff, AlertCircle, Dumbbell, ShieldAlert, MessageCircle, MapPin, Compass, Frown, Scissors, Heart, Zap, Home, Search, Crown, GraduationCap } from 'lucide-react';
 import { getTutorResponse } from '../services/geminiService';
 import { TopicId } from '../types';
 
 interface ChatBubbleProps {
   text: string;
   isUser: boolean;
+  correction?: { sentence: string; explanation: string };
 }
 
 interface RoleplayViewProps {
@@ -22,9 +23,26 @@ declare global {
   }
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ text, isUser }) => (
-  <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
-    <div className={`flex max-w-[85%] md:max-w-[70%] ${isUser ? 'flex-row-reverse' : 'flex-row'} gap-3`}>
+const ChatBubble: React.FC<ChatBubbleProps> = ({ text, isUser, correction }) => (
+  <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6 animate-in slide-in-from-bottom-2 duration-300 flex-col`}>
+    
+    {/* Correction Box appearing BEFORE the bot response if it exists */}
+    {!isUser && correction && (
+        <div className="max-w-[85%] md:max-w-[70%] mb-2 bg-red-50 border border-red-200 rounded-2xl rounded-bl-none p-4 ml-12 shadow-sm animate-in zoom-in duration-300">
+            <div className="flex items-start gap-3">
+                <div className="bg-red-100 p-2 rounded-full text-red-600 shrink-0">
+                    <GraduationCap size={18} />
+                </div>
+                <div>
+                    <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">Correzione Grammaticale</p>
+                    <p className="text-slate-800 font-medium italic mb-1">"{correction.sentence}"</p>
+                    <p className="text-slate-500 text-sm">{correction.explanation}</p>
+                </div>
+            </div>
+        </div>
+    )}
+
+    <div className={`flex max-w-[85%] md:max-w-[70%] ${isUser ? 'flex-row-reverse' : 'flex-row'} gap-3 self-${isUser ? 'end' : 'start'}`}>
       <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center mt-1 shadow-sm ${isUser ? 'bg-french-blue text-white' : 'bg-slate-800 text-white'}`}>
         {isUser ? <User size={20} /> : <Bot size={20} />}
       </div>
@@ -65,6 +83,17 @@ const PERSONAS = {
             "Je suis prêt à l'action. Donne-moi un ordre direct, tout de suite!"
         ]
     },
+    [TopicId.VERBI_ER]: {
+        name: "Julien le Poète",
+        role: "Poeta Romantico",
+        icon: <Heart />,
+        openers: [
+            "Ah, l'amour... Je pense à toi. Et toi, à quoi tu penses ? (Usa il verbo 'Penser')",
+            "J'aime regarder les étoiles. Qu'est-ce que tu aimes faire ? (Usa 'Aimer')",
+            "Je chante pour oublier. Tu chantes aussi ? (Usa 'Chanter')",
+            "Je rêve d'un monde meilleur. Tu rêves aussi ? (Usa 'Rêver')"
+        ]
+    },
     [TopicId.VERBI_IR]: {
         name: "Coach Remy",
         role: "Personal Trainer",
@@ -74,6 +103,28 @@ const PERSONAS = {
             "Salut sportif! Tu choisis les poids légers ou lourds? (Rispondi 'Je choisis...')",
             "On ne mollit pas! Nous finissons la série ensemble? (Rispondi usando il verbo Finir)",
             "Regarde tes bras! Tu grossis ou tu maigris? (Usa verbi in -IR)"
+        ]
+    },
+    [TopicId.VERBI_TOP]: {
+        name: "Le Baron",
+        role: "Nobile Esagerato",
+        icon: <Crown />,
+        openers: [
+            "Bonjour! Je suis le Baron. J'ai trois châteaux. Et toi, qu'est-ce que tu as ? (Usa 'J'ai...')",
+            "Je suis très important. Et toi, tu es qui ? (Usa 'Je suis...')",
+            "Je fais du sport tous les jours. Qu'est-ce que tu fais le matin ? (Usa 'Je fais...')",
+            "Je vais à Paris en hélicoptère. Tu vas où ? (Usa 'Je vais...')"
+        ]
+    },
+    [TopicId.VERBI_3_GROUP]: {
+        name: "Merlin le Magicien",
+        role: "Mago Caotico",
+        icon: <Zap />,
+        openers: [
+            "Abra Cadabra ! Je peux voler ! Et toi, qu'est-ce que tu peux faire ? (Usa 'Je peux...')",
+            "Je bois une potion magique. Tu bois quoi ? (Usa 'Je bois...')",
+            "Je vois le futur ! Tu vois quelque chose ? (Usa 'Je vois...')",
+            "Je prends ma baguette. Tu prends quoi ? (Usa 'Je prends...')"
         ]
     },
     [TopicId.LYON]: {
@@ -97,6 +148,50 @@ const PERSONAS = {
             "Bonjour, où se trouve la pharmacie ? Je dois tourner à droite ou à gauche ?",
             "S'il vous plaît, je dois aller à l'hôtel de ville. Je peux y aller à pied ?"
         ]
+    },
+    [TopicId.NEGATION]: {
+        name: "Marcel le Sceptique",
+        role: "Il Pessimista",
+        icon: <Frown />,
+        openers: [
+            "Pfff. Je n'aime rien. Et toi, tu aimes le football ? (Rispondi di NO)",
+            "Moi, je n'ai pas de chance. Tu as une voiture ? (Usa la negazione, ricorda 'de')",
+            "Je ne mange jamais. Tu manges des légumes ? (Rispondi 'Je ne mange pas de...')",
+            "Tout va mal. Tu es content ? (Rispondi 'Je ne suis pas...')"
+        ]
+    },
+    [TopicId.GENDER_NUMBER]: {
+        name: "Chantal la Styliste",
+        role: "Critica di Moda",
+        icon: <Scissors />,
+        openers: [
+            "Oh là là, regarde ce garçon. Il est beau ? Et sa sœur ? (Trasforma 'Beau' al femminile)",
+            "J'adore les chevaux ! Tu aimes les animaux ? (Attenzione ai plurali irregolari)",
+            "C'est un nouveau style. Tu aimes ma nouvelle robe ? (Usa gli aggettivi corretti)",
+            "Il a les yeux bleus. Tu as les yeux de quelle couleur ? (Plurale di 'Oeil')"
+        ]
+    },
+    [TopicId.FAMILY]: {
+        name: "Grand-mère Yvette",
+        role: "La Nonna Curiosa",
+        icon: <Home />,
+        openers: [
+            "Bonjour mon chéri ! Comment va ta famille ? Tes parents vont bien ?",
+            "Dis-moi, tu es marié(e) ou célibataire ? Je veux savoir !",
+            "Tu as des frères et sœurs ? Comment ils s'appellent ?",
+            "Moi j'ai beaucoup de petits-enfants. Et toi, tu as des enfants ?"
+        ]
+    },
+    [TopicId.DESCRIPTION]: {
+        name: "L'Inspecteur Jacques",
+        role: "Detective",
+        icon: <Search />,
+        openers: [
+            "Bonjour. Je cherche un suspect. Pouvez-vous me le décrire ? Il est grand ou petit ?",
+            "J'ai besoin d'indices ! Comment est-il habillé ? Il porte un chapeau ?",
+            "Décrivez son caractère. Est-il gentil ou méchant ? Menteur ?",
+            "A-t-il un animal de compagnie ? Un chien dangereux peut-être ?"
+        ]
     }
 };
 
@@ -114,9 +209,16 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
       return opts[Math.floor(Math.random() * opts.length)];
   }, [persona]);
 
-  const [messages, setMessages] = useState<{role: string, text: string}[]>([
+  const [messages, setMessages] = useState<{role: string, text: string, correction?: { sentence: string, explanation: string }}[]>([
     { role: 'model', text: initialMessage }
   ]);
+  
+  // Use a ref to keep track of messages for the async handleSend callback
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+      messagesRef.current = messages;
+  }, [messages]);
+
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -166,6 +268,96 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
   }
   // ----------------
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async (arg?: any) => {
+    // Allow calling with a specific string (from speech recognizer) or as an event handler
+    const textToSend = typeof arg === 'string' ? arg : input;
+    
+    if (!textToSend.trim()) return;
+    
+    const userText = textToSend;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setIsLoading(true);
+    setErrorMsg(null);
+
+    // Use ref to get latest messages for API history context (avoids stale closures)
+    const history = [...messagesRef.current, { role: 'user', text: userText }].map(m => ({
+        role: m.role,
+        parts: [{ text: m.text.replace('\n', ' ') }]
+    }));
+
+    try {
+        const responseText = await getTutorResponse(history, userText, topicId);
+        if(responseText) {
+            // Parsing logic for Corrections
+            let finalDisplay = responseText;
+            let correctionObj = undefined;
+
+            // Check for [CORRECTION: ...] block
+            // Regex looks for [CORRECTION: Sentence. Explanation]
+            const correctionMatch = responseText.match(/\[CORRECTION:(.*?)\]/s);
+            
+            if (correctionMatch) {
+                const rawCorrection = correctionMatch[1]; // "Je suis allé. Explanation."
+                // Remove the tag from the displayed text
+                finalDisplay = responseText.replace(correctionMatch[0], '').trim();
+                
+                // Split sentence and explanation roughly
+                const splitPoint = rawCorrection.indexOf('.');
+                if (splitPoint > 0) {
+                    correctionObj = {
+                        sentence: rawCorrection.substring(0, splitPoint + 1).trim(),
+                        explanation: rawCorrection.substring(splitPoint + 1).trim()
+                    };
+                } else {
+                    correctionObj = {
+                        sentence: rawCorrection.trim(),
+                        explanation: "Correggi la grammatica."
+                    };
+                }
+            }
+
+            // Clean ||| separator for display
+            finalDisplay = finalDisplay.replace('|||', '\n\n').trim();
+
+            setMessages(prev => [...prev, { role: 'model', text: finalDisplay, correction: correctionObj }]);
+            
+            // 2. Handle Speech (TTS) with smarter sequencing
+            const parts = finalDisplay.split('|||');
+            const frPart = parts[0] || "";
+            const itPart = parts[1] || "";
+
+            window.speechSynthesis.cancel(); // Clear previous queue
+
+            // Speak French part (Persona)
+            if (frPart.trim()) {
+                const cleanFr = frPart.replace(/\*.*?\*/g, '').trim();
+                if (cleanFr) speak(cleanFr, 'fr-FR', true);
+            }
+
+            // Speak Italian part (Explanation)
+            if (itPart.trim()) {
+                const cleanIt = itPart.replace(/\*.*?\*/g, '').trim();
+                // Small pause handled by separate utterances queue in browser
+                if (cleanIt) speak(cleanIt, 'it-IT', false);
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        setMessages(prev => [...prev, { role: 'model', text: "Désolé, je suis fatigué (Erreur API)." }]);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   // --- SPEECH TO TEXT SETUP ---
   const toggleListening = () => {
     setErrorMsg(null);
@@ -198,14 +390,15 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
 
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
-        setInput(transcript);
+        setInput(transcript); // Visual feedback
+        handleSend(transcript); // Auto-send the recognized text
       };
 
       recognition.onerror = (event: any) => {
         console.error("Speech error", event.error);
         setIsListening(false);
         if (event.error === 'not-allowed') {
-          setErrorMsg("Accesso al microfono negato. Controlla le impostazioni dei permessi del browser.");
+          setErrorMsg("Consenti l'accesso al microfono nelle impostazioni del browser.");
         } else if (event.error === 'no-speech') {
           // Just stop listening, no big error
         } else {
@@ -220,63 +413,6 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
     }
   };
   // ----------------
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    
-    const userText = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userText }]);
-    setIsLoading(true);
-    setErrorMsg(null);
-
-    const history = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.text.replace('\n', ' ') }]
-    }));
-
-    try {
-        const responseText = await getTutorResponse(history, userText, topicId);
-        if(responseText) {
-            // 1. Handle Text Display
-            const displayText = responseText.replace('|||', '\n\n');
-            setMessages(prev => [...prev, { role: 'model', text: displayText }]);
-            
-            // 2. Handle Speech (TTS) with smarter sequencing
-            const parts = responseText.split('|||');
-            const frPart = parts[0] || "";
-            const itPart = parts[1] || "";
-
-            window.speechSynthesis.cancel(); // Clear previous queue
-
-            // Speak French part (Persona)
-            if (frPart.trim()) {
-                const cleanFr = frPart.replace(/\*.*?\*/g, '').trim();
-                if (cleanFr) speak(cleanFr, 'fr-FR', true);
-            }
-
-            // Speak Italian part (Explanation)
-            if (itPart.trim()) {
-                const cleanIt = itPart.replace(/\*.*?\*/g, '').trim();
-                // Small pause handled by separate utterances queue in browser
-                if (cleanIt) speak(cleanIt, 'it-IT', false);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-        setMessages(prev => [...prev, { role: 'model', text: "Désolé, je suis fatigué (Erreur API)." }]);
-    } finally {
-        setIsLoading(false);
-    }
-  };
 
   const handleReset = () => {
       window.speechSynthesis.cancel();
@@ -319,7 +455,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
       {/* Chat Area */}
       <div className="flex-grow overflow-y-auto p-4 md:p-6 z-10">
         {messages.map((m, idx) => (
-          <ChatBubble key={idx} text={m.text} isUser={m.role === 'user'} />
+          <ChatBubble key={idx} text={m.text} isUser={m.role === 'user'} correction={m.correction} />
         ))}
         {isLoading && (
           <div className="flex items-center gap-2 text-slate-400 text-sm ml-16 mb-4">
@@ -347,18 +483,35 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder={isListening ? "Ascolto... (Parla in francese)" : "Scrivi la tua risposta..."}
+                placeholder={isListening ? "" : "Scrivi la tua risposta..."}
+                disabled={isListening}
                 className={`w-full pl-6 pr-14 py-4 rounded-full focus:ring-2 outline-none transition-all border border-transparent shadow-inner text-base
                     ${isListening 
-                        ? 'bg-red-50 text-red-800 focus:ring-red-400 placeholder-red-300' 
+                        ? 'bg-red-50 text-transparent' // Hide text when listening to show visualizer
                         : 'bg-slate-100 focus:bg-white focus:ring-french-blue text-slate-800'}`}
               />
               
+              {isListening && (
+                  <div className="absolute left-6 top-0 bottom-0 flex items-center gap-1.5 pointer-events-none">
+                      <span className="text-red-500 text-xs font-bold uppercase mr-2 animate-pulse">Enregistrement...</span>
+                      {[...Array(8)].map((_, i) => (
+                          <div 
+                            key={i} 
+                            className="w-1 bg-red-400 rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" 
+                            style={{ 
+                                height: `${Math.random() * 16 + 8}px`, 
+                                animationDelay: `${i * 0.05}s` 
+                            }} 
+                          />
+                      ))}
+                  </div>
+              )}
+              
               <button
                 onClick={toggleListening}
-                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-200
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-200 z-10
                     ${isListening 
-                        ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,65,53,0.6)]' 
+                        ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,65,53,0.6)] scale-110' 
                         : 'text-slate-400 hover:bg-slate-200'}`}
                 title="Parla in francese"
               >

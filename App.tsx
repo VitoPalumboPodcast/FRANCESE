@@ -18,24 +18,80 @@ const modules: ModuleData[] = [
         progress: 80
     },
     {
-        id: TopicId.IMPERATIF,
-        title: "2. L'Imperativo",
-        description: "Dai ordini e consigli. Attenzione: qui i pronomi cambiano posto!",
-        icon: "👉",
+        id: TopicId.VERBI_ER,
+        title: "2. Verbi in -ER (1° Gr.)",
+        description: "Parler, Manger, Aimer. Il 90% dei verbi francesi è qui.",
+        icon: "🗣️",
         unlocked: true,
-        progress: 50
+        progress: 0
+    },
+    {
+        id: TopicId.VERBI_TOP,
+        title: "3. I Fantastici 4 (Irregolari)",
+        description: "Essere, Avere, Andare, Fare. I pilastri della lingua francese.",
+        icon: "👑",
+        unlocked: true,
+        progress: 0
     },
     {
         id: TopicId.VERBI_IR, 
-        title: "3. Verbi in -IR (2° Gr.)",
+        title: "4. Verbi in -IR (2° Gr.)",
         description: "Finir, Choisir, Grossir. Il segreto è nel ponte 'ISS'.",
         icon: "🚀",
         unlocked: true,
         progress: 20
     },
     {
+        id: TopicId.VERBI_3_GROUP,
+        title: "5. Altri Irregolari (3° Gr.)",
+        description: "Partir, Prendre, Pouvoir. Il gruppo del caos (e i più utili).",
+        icon: "⚡",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.FAMILY,
+        title: "6. La Famiglia",
+        description: "Genitori, nonni, cugini. Tutto il lessico della parentela.",
+        icon: "👨‍👩‍👧‍👦",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.DESCRIPTION,
+        title: "7. Descrizione e Abiti",
+        description: "Sei alto o basso? Cosa indossi? Descrivere persone e animali.",
+        icon: "👗",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.NEGATION,
+        title: "8. La Forma Negativa",
+        description: "Non, pas, jamais. Impara a negare correttamente e la regola del 'de'.",
+        icon: "⛔",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.GENDER_NUMBER,
+        title: "9. Maschile, Femminile, Plurale",
+        description: "Beau/Belle, Oeil/Yeux. Le irregolarità che devi conoscere.",
+        icon: "🎭", // Using a string identifier that we'll render as icon or emoji
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.IMPERATIF,
+        title: "10. L'Imperativo",
+        description: "Dai ordini e consigli. Attenzione: qui i pronomi cambiano posto!",
+        icon: "👉",
+        unlocked: true,
+        progress: 50
+    },
+    {
         id: TopicId.ORIENTATION,
-        title: "4. Orientamento",
+        title: "11. Orientamento",
         description: "Scusi, per andare alla stazione? Impara a chiedere e dare indicazioni.",
         icon: "🗺️",
         unlocked: true,
@@ -43,7 +99,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.LYON, 
-        title: "5. Culture: Lyon",
+        title: "12. Culture: Lyon",
         description: "Un viaggio tra i fiumi, la gastronomia e il quartiere moderno Confluence.",
         icon: "🏙️",
         unlocked: true,
@@ -58,7 +114,7 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
         Corso di Francese
       </h1>
       <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-        Un percorso passo dopo passo. Padroneggia i pronomi, l'imperativo e scopri la cultura francese.
+        Un percorso passo dopo passo. Padroneggia i verbi, i pronomi e scopri la cultura francese.
       </p>
     </div>
 
@@ -78,8 +134,8 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
                 </div>
 
                 <div className="flex justify-between items-start mb-4">
-                    <span className="text-4xl shadow-sm bg-slate-50 rounded-2xl w-16 h-16 flex items-center justify-center border border-slate-100">
-                        {module.unlocked ? module.icon : <Lock size={24} className="text-slate-400"/>}
+                    <span className="text-4xl shadow-sm bg-slate-50 rounded-2xl w-16 h-16 flex items-center justify-center border border-slate-100 font-emoji">
+                        {module.icon}
                     </span>
                     {module.unlocked && module.progress === 100 && (
                         <div className="bg-green-100 text-green-700 p-2 rounded-full"><Check size={16} strokeWidth={3}/></div>

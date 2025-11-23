@@ -1,45 +1,95 @@
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Info, AlertTriangle, Type, ArrowLeft, Book, CheckCircle2, Volume2, PlayCircle, FileText, MapPin, Navigation, User, RefreshCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown, ChevronUp, Info, AlertTriangle, Type, ArrowLeft, Book, CheckCircle2, Volume2, PlayCircle, FileText, MapPin, Navigation, User, RefreshCcw, Car, PauseCircle, Utensils, Heart, Eye, Home, Camera, Music, Sun, Coffee, ShoppingBag, Users, Smile, Clock, Zap, Bike, Train, Plane, Landmark } from 'lucide-react';
 import { LessonSection, TopicId } from '../types';
 
 // -- Interactive Map Component --
 const CityMapGame: React.FC = () => {
-  const buildings = [
-    { id: 'gare', name: 'Gare', row: 1, col: 1, icon: '🚂' },
-    { id: 'parc', name: 'Parc', row: 1, col: 2, icon: '🌳' },
-    { id: 'poste', name: 'Poste', row: 1, col: 3, icon: '✉️' },
-    { id: 'mairie', name: 'Mairie', row: 2, col: 1, icon: '🏛️' },
-    { id: 'place', name: 'Place', row: 2, col: 2, icon: '⛲' },
-    { id: 'banque', name: 'Banque', row: 2, col: 3, icon: '💶' },
-    { id: 'cinema', name: 'Cinéma', row: 3, col: 1, icon: '🎬' },
-    { id: 'ecole', name: 'École', row: 3, col: 2, icon: '🏫' },
-    { id: 'hopital', name: 'Hôpital', row: 3, col: 3, icon: '🏥' },
+  
+  // Defined explicit types for buildings to render them differently
+  type BuildingType = 'standard' | 'L-shape' | 'park' | 'square' | 'complex';
+
+  interface MapObject {
+    id: string;
+    name: string;
+    type: BuildingType;
+    color: string;
+    // Grid position (1-4 to accommodate the river on the left)
+    col: number;
+    row: number;
+    // Visual tweaks
+    roofColor?: string;
+  }
+
+  const mapObjects: MapObject[] = [
+    { id: 'gare', name: 'Gare', type: 'complex', color: 'bg-slate-300', col: 2, row: 1, roofColor: 'bg-slate-500' },
+    { id: 'parc', name: 'Parc', type: 'park', color: 'bg-green-100', col: 3, row: 1 },
+    { id: 'poste', name: 'Poste', type: 'standard', color: 'bg-yellow-100', col: 4, row: 1, roofColor: 'bg-yellow-400' },
+    
+    { id: 'mairie', name: 'Mairie', type: 'standard', color: 'bg-blue-100', col: 2, row: 2, roofColor: 'bg-slate-600' },
+    { id: 'place', name: 'Place', type: 'square', color: 'bg-transparent', col: 3, row: 2 }, // Roundabout
+    { id: 'banque', name: 'Banque', type: 'standard', color: 'bg-emerald-100', col: 4, row: 2, roofColor: 'bg-emerald-600' },
+    
+    { id: 'cinema', name: 'Cinéma', type: 'L-shape', color: 'bg-purple-100', col: 2, row: 3, roofColor: 'bg-purple-500' },
+    { id: 'ecole', name: 'École', type: 'standard', color: 'bg-orange-100', col: 3, row: 3, roofColor: 'bg-orange-400' },
+    { id: 'hopital', name: 'Hôpital', type: 'complex', color: 'bg-red-50', col: 4, row: 3, roofColor: 'bg-white' },
   ];
 
+  // GPS LOGIC (Precise Coordinates):
+  // Vertical Street Centers: 39.5% (Left), 64.5% (Right)
+  // Horizontal Street Centers: 30.5% (Top), 63.5% (Bottom)
+  
   const challenges = [
-    { targetId: 'banque', instruction: "Tu es à la Gare. Va tout droit jusqu'à la Mairie, puis traverse la Place. C'est à droite." },
-    { targetId: 'parc', instruction: "Le lieu se trouve au Nord, à côté de la Gare." },
-    { targetId: 'hopital', instruction: "C'est au Sud-Est. Derrière l'école." },
-    { targetId: 'mairie', instruction: "C'est en face de la Place, à gauche." }
+    { 
+        targetId: 'banque', 
+        // Start: Intersection Horizontal 1 & Vertical 2
+        instruction: "Descendez la rue. La Banque est le bâtiment vert sur votre gauche.",
+        arrow: { top: '30.5%', left: '64.5%', rot: 180 }
+    },
+    { 
+        targetId: 'gare', 
+        // Start: Intersection Horizontal 2 & Vertical 2
+        instruction: "Avancez jusqu'au croisement. Tournez à droite. Continuez tout droit. C'est le grand bâtiment gris à votre gauche.",
+        arrow: { top: '63.5%', left: '64.5%', rot: 270 }
+    },
+    { 
+        targetId: 'poste', 
+        // Start: Vertical 2 (between Place/Banque)
+        instruction: "Allez tout droit vers le nord. La destination est le bâtiment jaune sur votre droite.",
+        arrow: { top: '47%', left: '64.5%', rot: 0 }
+    },
+    { 
+        targetId: 'mairie', 
+        // Start: Vertical 2 (Top)
+        instruction: "Descendez la rue jusqu'au carrefour. Tournez à droite. Avancez. La Mairie est le bâtiment sur votre gauche.",
+        arrow: { top: '15%', left: '64.5%', rot: 180 }
+    },
+    {
+        targetId: 'cinema',
+        // Start: Vertical 1 (Top)
+        instruction: "Allez tout droit vers le sud. Traversez deux carrefours. Le Cinéma est le bâtiment violet sur votre droite.",
+        arrow: { top: '15%', left: '39.5%', rot: 180 }
+    }
   ];
 
   const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleBuildingClick = (b: any) => {
+  const currentChallenge = challenges[currentChallengeIndex];
+
+  const handleBuildingClick = (b: MapObject) => {
     if (success) return;
     
-    if (b.id === challenges[currentChallengeIndex].targetId) {
-      setFeedback("Bravo ! C'est correct ! 🎉");
+    if (b.id === currentChallenge.targetId) {
+      setFeedback("🎯 Vous êtes arrivé à destination !");
       setSuccess(true);
-      const u = new SpeechSynthesisUtterance("Bravo ! C'est correct !");
+      const u = new SpeechSynthesisUtterance("Vous êtes arrivé à destination !");
       u.lang = 'fr-FR';
       window.speechSynthesis.speak(u);
     } else {
-      setFeedback(`Non, ce n'est pas ${b.name}. Essaie encore !`);
-      const u = new SpeechSynthesisUtterance(`Non, ce n'est pas ${b.name}`);
+      setFeedback(`⚠️ Non, ici c'est : ${b.name}.`);
+      const u = new SpeechSynthesisUtterance(`Recalcul en cours... c'est ${b.name}`);
       u.lang = 'fr-FR';
       window.speechSynthesis.speak(u);
     }
@@ -52,46 +102,143 @@ const CityMapGame: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-100 p-6 rounded-xl border-2 border-slate-200">
-      <div className="mb-4 flex justify-between items-start">
-        <div>
-          <h4 className="text-lg font-bold text-french-blue flex items-center gap-2">
-            <Navigation size={20}/> Trouve le chemin !
-          </h4>
-          <p className="text-slate-600 italic mt-2 bg-white p-3 rounded-lg shadow-sm border border-slate-200">
-            "{challenges[currentChallengeIndex].instruction}"
-          </p>
+    <div className="bg-white p-4 md:p-6 rounded-xl border-2 border-slate-200 shadow-sm">
+      <div className="mb-6">
+        <div className="flex justify-between items-start mb-4">
+            <h4 className="text-xl font-bold text-french-blue flex items-center gap-2">
+                <Navigation size={24}/> GPS Simulator
+            </h4>
+            <button 
+            onClick={nextChallenge} 
+            className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+            >
+            <RefreshCcw size={14} /> Nuovo Percorso
+            </button>
         </div>
-        <button 
-          onClick={nextChallenge} 
-          className="text-xs bg-slate-200 hover:bg-slate-300 p-2 rounded-full transition-colors"
-          title="Prossima sfida"
-        >
-          <RefreshCcw size={16} />
-        </button>
+        
+        <div className="bg-slate-800 text-white p-4 rounded-xl border border-slate-700 flex gap-4 items-center shadow-lg relative overflow-hidden">
+            <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-500 animate-pulse"></div>
+            <div className="bg-green-600/20 p-3 rounded-full border border-green-500/50">
+                <Car size={24} className="text-green-400" />
+            </div>
+            <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Assistente Vocale</p>
+                <p className="text-lg font-medium leading-tight font-serif">
+                    "{currentChallenge.instruction}"
+                </p>
+            </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 max-w-md mx-auto aspect-square">
-        {buildings.map((b) => (
-          <button
-            key={b.id}
-            onClick={() => handleBuildingClick(b)}
-            className={`relative bg-white rounded-xl shadow-sm border-2 flex flex-col items-center justify-center p-2 transition-all hover:scale-105 active:scale-95
-              ${success && b.id === challenges[currentChallengeIndex].targetId ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 'border-slate-200 hover:border-french-blue'}
-            `}
-          >
-            <span className="text-3xl mb-1">{b.icon}</span>
-            <span className="text-xs font-bold text-slate-600">{b.name}</span>
-          </button>
-        ))}
+      <div className="relative max-w-[500px] mx-auto aspect-square bg-[#2c2c2c] rounded-xl overflow-hidden shadow-2xl border-4 border-slate-900 group cursor-crosshair">
+        
+        {/* --- MAP LAYOUT --- */}
+        
+        {/* 1. River (Left Side) */}
+        <div className="absolute left-0 top-0 bottom-0 w-[15%] bg-cyan-700 border-r-4 border-slate-500/30 z-0">
+            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/water.png')]"></div>
+            <div className="absolute top-10 left-1 text-cyan-200/50 -rotate-90 text-xs font-bold tracking-[0.5em]">LA SAÔNE</div>
+        </div>
+
+        {/* 2. Streets & Markings (The Grid) */}
+        {/* Vertical Street 1 (Center Left) */}
+        <div className="absolute left-[39.5%] top-0 bottom-0 w-0 border-l-2 border-dashed border-white/20 h-full z-0"></div>
+        {/* Vertical Street 2 (Center Right) */}
+        <div className="absolute left-[64.5%] top-0 bottom-0 w-0 border-l-2 border-dashed border-white/20 h-full z-0"></div>
+        
+        {/* Horizontal Street 1 (Top) */}
+        <div className="absolute top-[30.5%] left-[15%] right-0 h-0 border-t-2 border-dashed border-white/20 w-full z-0"></div>
+        {/* Horizontal Street 2 (Bottom) */}
+        <div className="absolute top-[63.5%] left-[15%] right-0 h-0 border-t-2 border-dashed border-white/20 w-full z-0"></div>
+
+        {/* 3. Buildings Layer */}
+        <div className="absolute inset-0 z-10 pointer-events-none">
+            {mapObjects.map((b) => {
+                const left = 18 + ((b.col - 2) * 25);
+                const top = 3 + ((b.row - 1) * 33);
+                
+                // Specific Roundabout Handling (It's on the road)
+                if (b.type === 'square') {
+                    return (
+                        <div key={b.id} className="absolute w-[22%] h-[26%] rounded-full border-[6px] border-[#2c2c2c] flex items-center justify-center bg-slate-600 shadow-lg pointer-events-auto cursor-pointer"
+                             style={{ left: `${left-2}%`, top: `${top-2}%` }} // Slightly larger
+                             onClick={() => handleBuildingClick(b)}>
+                             <div className="w-16 h-16 border-2 border-dashed border-white/30 rounded-full absolute"></div>
+                             <div className="w-2 h-2 bg-white rounded-full z-10"></div>
+                             <span className="absolute -bottom-5 text-[9px] text-white/80 font-bold bg-black/50 px-1 rounded">Rond-Point</span>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div 
+                        key={b.id}
+                        className="absolute w-[18%] h-[22%] pointer-events-auto transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                        style={{ left: `${left}%`, top: `${top}%` }}
+                        onClick={() => handleBuildingClick(b)}
+                    >
+                        {/* Building Body */}
+                        <div 
+                            className={`w-full h-full ${b.color} relative shadow-[8px_8px_0px_rgba(0,0,0,0.4)] border border-white/10`}
+                            style={
+                                b.type === 'L-shape' ? { clipPath: 'polygon(0 0, 100% 0, 100% 100%, 40% 100%, 40% 40%, 0 40%)' } :
+                                b.type === 'park' ? { borderRadius: '9999px', opacity: 0.9, border: '4px solid #86efac' } :
+                                { borderRadius: '4px' }
+                            }
+                        >
+                            {/* Roof / Texture */}
+                            {b.roofColor && (
+                                <div className={`absolute inset-2 ${b.roofColor} shadow-inner opacity-90`}>
+                                    {b.type === 'complex' && <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-black/20"></div>}
+                                    {b.type === 'complex' && <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-black/20"></div>}
+                                </div>
+                            )}
+                            
+                            {/* Label Tag */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[9px] text-center py-0.5 font-bold truncate px-1 backdrop-blur-sm z-20">
+                                {b.name}
+                            </div>
+                            
+                            {/* Center Icon/Content */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                {b.type === 'park' && <span className="text-2xl">🌳</span>}
+                                {b.id === 'hopital' && <span className="text-red-500 font-bold text-xl bg-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">+</span>}
+                                {b.id === 'poste' && <span className="text-yellow-800 text-lg">✉️</span>}
+                            </div>
+                        </div>
+                        
+                        {success && b.id === currentChallenge.targetId && (
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce z-30">
+                                <MapPin className="text-green-500 drop-shadow-lg" size={32} fill="currentColor" />
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+
+        {/* 4. THE PLAYER ARROW (Absolute Positioning Layer - Z-20 to float above roads) */}
+        <div 
+            className="absolute w-8 h-8 z-20 transition-all duration-700 ease-in-out filter drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+            style={{ 
+                top: currentChallenge.arrow.top, 
+                left: currentChallenge.arrow.left, 
+                transform: `translate(-50%, -50%) rotate(${currentChallenge.arrow.rot}deg)`
+            }}
+        >
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ef4444" stroke="white" strokeWidth="2">
+                <path d="M12 2L4.5 20.29C4.21 21.01 4.96 21.74 5.67 21.39L12 18.25L18.33 21.39C19.04 21.74 19.79 21.01 19.5 20.29L12 2Z" />
+            </svg>
+        </div>
+
       </div>
 
       {feedback && (
-        <div className={`mt-4 p-3 rounded-lg text-center font-bold ${success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div className={`mt-6 p-4 rounded-xl text-center font-bold shadow-sm animate-in slide-in-from-bottom-2 ${success ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
           {feedback}
           {success && (
-             <button onClick={nextChallenge} className="block mx-auto mt-2 text-xs bg-green-600 text-white px-4 py-2 rounded-full">
-               Prossima Sfida →
+             <button onClick={nextChallenge} className="block mx-auto mt-3 text-sm bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full transition-colors shadow-md">
+               Prossima Destinazione →
              </button>
           )}
         </div>
@@ -149,6 +296,571 @@ const courseContent: Record<TopicId, { title: string; description: string; secti
           { french: 'Nous ne les achetons pas.', italian: 'Non li compriamo.', note: '' }
         ]
       }
+    ]
+  },
+  [TopicId.NEGATION]: {
+    title: "La Forma Negativa",
+    description: "Non, Pas, Jamais. Come negare correttamente.",
+    sections: [
+        {
+            id: 'general',
+            title: "Regola Generale",
+            content: "Nella maggior parte dei casi, la forma negativa si ottiene racchiudendo il verbo coniugato tra i due elementi di negazione: 'ne' e 'pas'.",
+            examples: [
+                { french: "Je mange.", italian: "Io mangio.", note: "Affermativo" },
+                { french: "Je ne mange pas.", italian: "Io non mangio.", note: "Negativo: ne + verbo + pas" },
+                { french: "Tu parles.", italian: "Tu parli.", note: "" },
+                { french: "Tu ne parles pas.", italian: "Tu non parli.", note: "" }
+            ]
+        },
+        {
+            id: 'apostrophe',
+            title: "L'Elisione (N')",
+            content: "Se il verbo (o il pronome che lo precede) inizia per vocale o per 'h' muta, 'ne' diventa 'n''. Questo serve per evitare l'incontro di due vocali.",
+            examples: [
+                { french: "Je n'ai pas de stylo.", italian: "Non ho una penna.", note: "Davanti a vocale (ai)" },
+                { french: "Je n'aime pas le café.", italian: "Non mi piace il caffè.", note: "Davanti a vocale (aime)" }
+            ]
+        },
+        {
+            id: 'cod_neg',
+            title: "Negazione con i Pronomi COD",
+            content: "Quando c'è un pronome COD (me, te, le, la...), il gruppo Pronome+Verbo non si divide. Ne e Pas si mettono prima e dopo questo blocco.",
+            examples: [
+                { french: "Je ne la regarde pas.", italian: "Non la guardo.", note: "Ne [la regarde] pas" },
+                { french: "Il ne m'écoute pas.", italian: "Non mi ascolta.", note: "Ne [m'écoute] pas" }
+            ]
+        },
+        {
+            id: 'articles',
+            title: "Il Cambiamento degli Articoli",
+            content: "Importante! Con la negazione (tranne con essere), gli articoli indeterminativi (un, une, des) diventano 'DE' o 'D''.",
+            examples: [
+                { french: "J'ai des amis. -> Je n'ai pas d'amis.", italian: "Ho amici. -> Non ho amici.", note: "Des diventa D'" },
+                { french: "Je bois du lait. -> Je ne bois pas de lait.", italian: "Bevo latte. -> Non bevo latte.", note: "Du diventa De" },
+                { french: "C'est une pomme. -> Ce n'est pas une pomme.", italian: "È una mela. -> Non è una mela.", note: "Eccezione: con 'Être' non cambia!" }
+            ]
+        },
+        {
+            id: 'imperative_neg',
+            title: "Imperativo Negativo",
+            content: "Nell'ordine negativo, la struttura è Ne + Pronome + Verbo + Pas. Il pronome resta prima del verbo, come una frase normale!",
+            examples: [
+                { french: "Regarde-la !", italian: "Guardala!", note: "Affermativo (Dopo)" },
+                { french: "Ne la regarde pas !", italian: "Non guardarla!", note: "Negativo (Prima)" }
+            ]
+        }
+    ]
+  },
+  [TopicId.GENDER_NUMBER]: {
+    title: "Femminili e Plurali Irregolari",
+    description: "Quando la 'e' e la 's' non bastano. Le trasformazioni speciali.",
+    sections: [
+        {
+            id: 'general_rules',
+            title: "Regola Generale (La base)",
+            content: "Prima di vedere le eccezioni, ricordiamo la regola d'oro. Generalmente:\n1. Femminile = Maschile + 'e'\n2. Plurale = Singolare + 's'",
+            examples: [
+                { french: "Il est grand. -> Elle est grande.", italian: "Lui è alto. -> Lei è alta.", note: "Si aggiunge 'e'" },
+                { french: "Un ami. -> Des amis.", italian: "Un amico. -> Degli amici.", note: "Si aggiunge 's'" },
+                { french: "Une amie. -> Des amies.", italian: "Un'amica. -> Delle amiche.", note: "Femminile + Plurale (es)" }
+            ]
+        },
+        {
+            id: 'fem_irregular',
+            title: "Femminili Irregolari",
+            content: "Alcuni aggettivi formano il femminile in modo particolare.",
+            examples: [],
+            conjugationTables: [
+                {
+                    title: "Trasformazioni Femminili",
+                    rows: [
+                        { pronoun: "Maschile (-é)", verb: "Femminile (-ée)" },
+                        { pronoun: "marié (sposato)", verb: "mariée" },
+                        { pronoun: "fâché (arrabbiato)", verb: "fâchée" },
+                        { pronoun: "Maschile (-f)", verb: "Femminile (-ve)" },
+                        { pronoun: "veuf (vedovo)", verb: "veuve" },
+                        { pronoun: "Maschile (-eux)", verb: "Femminile (-euse)" },
+                        { pronoun: "heureux (felice)", verb: "heureuse" },
+                        { pronoun: "furieux (furioso)", verb: "furieuse" },
+                        { pronoun: "Casi Speciali", verb: "" },
+                        { pronoun: "beau (bello)", verb: "belle" },
+                        { pronoun: "nouveau (nuovo)", verb: "nouvelle" }
+                    ]
+                }
+            ]
+        },
+        {
+            id: 'plural_irregular',
+            title: "Plurali Irregolari",
+            content: "Alcuni nomi cambiano completamente al plurale. Non si aggiunge solo la 's'!",
+            examples: [
+                { french: "l'œil -> les yeux", italian: "l'occhio -> gli occhi", note: "Cambio totale" },
+                { french: "un travail -> des travaux", italian: "un lavoro -> dei lavori", note: "-ail diventa -aux" },
+                { french: "un cheval -> des chevaux", italian: "un cavallo -> dei cavalli", note: "-al diventa -aux" }
+            ]
+        }
+    ]
+  },
+  [TopicId.FAMILY]: {
+      title: "La Famiglia e lo Stato Civile",
+      description: "I parenti, i nonni, i nipoti e lo stato civile.",
+      sections: [
+          {
+              id: 'parents',
+              title: "I Gradi di Parentela (Basi)",
+              content: "Ecco i membri fondamentali della famiglia.",
+              examples: [
+                  { french: "Les parents (Le père / La mère)", italian: "I genitori (Padre / Madre)", note: "Papa / Maman (fam.)" },
+                  { french: "Les enfants (Le fils / La fille)", italian: "I figli (Figlio / Figlia)", note: "" },
+                  { french: "Le mari / La femme", italian: "Il marito / La moglie", note: "" }
+              ]
+          },
+          {
+              id: 'grandparents',
+              title: "Nonni e Nipoti",
+              content: "Attenzione ai 'falsi amici'. 'Petit-fils' non è un piccolo figlio, è il nipote (di nonno)!",
+              examples: [
+                  { french: "Les grands-parents (Grand-père / Grand-mère)", italian: "I nonni", note: "Papi / Mamie (fam.)" },
+                  { french: "Les petits-enfants (Petit-fils / Petite-fille)", italian: "I nipoti (dei nonni)", note: "" },
+                  { french: "Le neveu / La nièce", italian: "Il nipote / La nipote (degli zii)", note: "Diverso da petit-fils!" }
+              ]
+          },
+          {
+              id: 'relatives',
+              title: "Zii e Cugini",
+              content: "Il resto della famiglia allargata.",
+              examples: [
+                  { french: "L'oncle / La tante", italian: "Lo zio / La zia", note: "" },
+                  { french: "Le cousin / La cousine", italian: "Il cugino / La cugina", note: "" }
+              ]
+          },
+          {
+              id: 'civil_status',
+              title: "Stato Civile",
+              content: "Come descrivere la propria situazione sentimentale.",
+              conjugationTables: [
+                  {
+                      title: "Stato Civile (M / F)",
+                      rows: [
+                          { pronoun: "Sposato/a", verb: "Marié / Mariée" },
+                          { pronoun: "Separato/a", verb: "Séparé / Séparée" },
+                          { pronoun: "Divorziato/a", verb: "Divorcé / Divorcée" },
+                          { pronoun: "Vedovo/a", verb: "Veuf / Veuve" },
+                          { pronoun: "Celibe/Nubile", verb: "Célibataire" }
+                      ]
+                  }
+              ],
+              examples: []
+          }
+      ]
+  },
+  [TopicId.DESCRIPTION]: {
+      title: "Descrizione e Abbigliamento",
+      description: "Com'è? Cosa indossa? Carattere, fisico e vestiti.",
+      sections: [
+          {
+              id: 'character',
+              title: "Il Carattere (Caractère)",
+              content: "Aggettivi per descrivere la personalità.",
+              examples: [
+                  { french: "Il est sympathique / gentil.", italian: "È simpatico / gentile.", note: "" },
+                  { french: "Elle est intelligente / honnête.", italian: "È intelligente / onesta.", note: "" },
+                  { french: "C'est un menteur (une menteuse).", italian: "È un bugiardo.", note: "Sostantivo" },
+                  { french: "Il est sage.", italian: "È saggio/bravo.", note: "Per i bambini" },
+                  { french: "Il est grossier.", italian: "È scostumato.", note: "Dice parolacce (gros mots)" }
+              ]
+          },
+          {
+              id: 'emotions',
+              title: "Glossario: Emozioni e Sentimenti",
+              content: "Come ti senti oggi? Termini utili per esprimere stati d'animo.",
+              examples: [
+                  { french: "Ravi / Content", italian: "Raggiante / Contento", note: "Felicità" },
+                  { french: "Déçu (Quelle déception !)", italian: "Deluso (Che delusione!)", note: "Aspettativa mancata" },
+                  { french: "Fâché / En colère", italian: "Offeso / In collera (Arrabbiato)", note: "Rabbia" },
+                  { french: "Avoir du chagrin", italian: "Essere tristi / Addolorati", note: "Tristezza" },
+                  { french: "Intrigué", italian: "Incuriosito", note: "Curiosità" },
+                  { french: "Farceur", italian: "Scherzoso", note: "Ama fare scherzi (blagues)" }
+              ]
+          },
+          {
+              id: 'physical',
+              title: "Aspetto Fisico",
+              content: "Descrivere il viso e i capelli.",
+              examples: [
+                  { french: "Elle a les cheveux lisses.", italian: "Ha i capelli lisci.", note: "" },
+                  { french: "Il a les cheveux bruns et courts.", italian: "Ha i capelli castani e corti.", note: "" },
+                  { french: "Il porte des lunettes.", italian: "Porta gli occhiali.", note: "" }
+              ]
+          },
+          {
+              id: 'clothing',
+              title: "Abbigliamento (Vêtements)",
+              content: "Cosa indossi oggi?",
+              examples: [
+                  { french: "Une veste / Une robe", italian: "Una giacca / Un vestito (donna)", note: "" },
+                  { french: "Un pantalon / Un pull", italian: "Pantaloni / Maglione", note: "" },
+                  { french: "Des baskets / Des chaussures à talons", italian: "Scarpe da ginnastica / Scarpe col tacco", note: "" }
+              ]
+          },
+          {
+              id: 'accessories',
+              title: "Accessori",
+              content: "I dettagli che fanno la differenza.",
+              examples: [
+                  { french: "Des boucles d'oreilles", italian: "Orecchini", note: "" },
+                  { french: "Un collier / Une bague", italian: "Collana / Anello", note: "" },
+                  { french: "Un sac", italian: "Borsa / Zaino", note: "" }
+              ]
+          },
+          {
+              id: 'pets',
+              title: "Animali Domestici",
+              content: "I nostri amici animali.",
+              examples: [
+                  { french: "Le chien / Le chat", italian: "Il cane / Il gatto", note: "" },
+                  { french: "Le poisson rouge", italian: "Il pesce rosso", note: "" },
+                  { french: "Le perroquet / La tortue", italian: "Il pappagallo / La tartaruga", note: "" }
+              ]
+          }
+      ]
+  },
+  [TopicId.VERBI_ER]: {
+    title: "Verbi in -ER (1° Gruppo)",
+    description: "Parler, Manger, Aimer. Il 90% dei verbi francesi. Facili e regolari.",
+    sections: [
+        {
+            id: 'intro_er',
+            title: "Regola Generale",
+            content: "Per coniugare un verbo in -ER, togli la desinenza -ER e aggiungi: -e, -es, -e, -ons, -ez, -ent.",
+            conjugationTables: [
+                {
+                    title: "Parler (Parlare)",
+                    rows: [
+                        { pronoun: "Je", verb: "parle" },
+                        { pronoun: "Tu", verb: "parles" },
+                        { pronoun: "Il", verb: "parle" },
+                        { pronoun: "Elle", verb: "parle" },
+                        { pronoun: "On", verb: "parle" },
+                        { pronoun: "Nous", verb: "parlons" },
+                        { pronoun: "Vous", verb: "parlez" },
+                        { pronoun: "Ils", verb: "parlent" },
+                        { pronoun: "Elles", verb: "parlent" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je parle français.", italian: "Parlo francese.", note: "" },
+                { french: "Ils parlent (parl) anglais.", italian: "Loro parlano inglese.", note: "-ENT non si pronuncia!" }
+            ]
+        },
+        {
+            id: 'exceptions_spelling',
+            title: "Eccezioni Ortografiche",
+            content: "Per mantenere il suono dolce, alcuni verbi cambiano leggermente con 'Nous'.",
+            examples: [
+                { french: "Manger -> Nous mangeons", italian: "Mangiamo", note: "Si aggiunge 'e' per non leggere 'mang-ons'" },
+                { french: "Commencer -> Nous commençons", italian: "Iniziamo", note: "Si usa la cediglia 'ç' per non leggere 'commenc-ons'" }
+            ]
+        },
+        {
+            id: 'aller_exception',
+            title: "Attenzione: ALLER",
+            content: "Il verbo 'Aller' (andare) finisce in -ER ma è IRREGOLARE (3° gruppo). Non dire 'J'alle'!",
+            examples: [
+                { french: "Je vais", italian: "Io vado", note: "Irregolare" },
+                { french: "Tu vas", italian: "Tu vai", note: "" },
+                { french: "Ils vont", italian: "Loro vanno", note: "" }
+            ]
+        }
+    ]
+  },
+  [TopicId.VERBI_TOP]: {
+    title: "I Fantastici 4 (Verbi Fondamentali)",
+    description: "Essere, Avere, Andare, Fare. Sono irregolari, sono ovunque e sono essenziali.",
+    sections: [
+        {
+            id: 'etre_avoir',
+            title: "Être & Avoir (Essere & Avere)",
+            content: "Le basi assolute. Servono anche per formare il passato. Imparali a memoria!",
+            conjugationTables: [
+                {
+                    title: "Être (Essere)",
+                    rows: [
+                        { pronoun: "Je", verb: "suis" },
+                        { pronoun: "Tu", verb: "es" },
+                        { pronoun: "Il", verb: "est" },
+                        { pronoun: "Elle", verb: "est" },
+                        { pronoun: "On", verb: "est" },
+                        { pronoun: "Nous", verb: "sommes" },
+                        { pronoun: "Vous", verb: "êtes" },
+                        { pronoun: "Ils", verb: "sont" },
+                        { pronoun: "Elles", verb: "sont" }
+                    ]
+                },
+                {
+                    title: "Avoir (Avere)",
+                    rows: [
+                        { pronoun: "J'", verb: "ai" },
+                        { pronoun: "Tu", verb: "as" },
+                        { pronoun: "Il", verb: "a" },
+                        { pronoun: "Elle", verb: "a" },
+                        { pronoun: "On", verb: "a" },
+                        { pronoun: "Nous", verb: "avons" },
+                        { pronoun: "Vous", verb: "avez" },
+                        { pronoun: "Ils", verb: "ont" },
+                        { pronoun: "Elles", verb: "ont" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je suis italien.", italian: "Sono italiano.", note: "Être" },
+                { french: "J'ai faim (Affamé).", italian: "Ho fame (Affamato).", note: "Avoir" },
+                { french: "J'ai soif (Assoifé).", italian: "Ho sete (Assetato).", note: "Avoir" },
+                { french: "J'ai de la chance (Chanceux).", italian: "Sono fortunato.", note: "Avoir" }
+            ]
+        },
+        {
+            id: 'aller_faire',
+            title: "Aller & Fare (Andare & Fare)",
+            content: "Attenzione! 'Aller' sembra regolare ma non lo è. 'Faire' è usato in mille espressioni.",
+            conjugationTables: [
+                {
+                    title: "Aller (Andare)",
+                    rows: [
+                        { pronoun: "Je", verb: "vais" },
+                        { pronoun: "Tu", verb: "vas" },
+                        { pronoun: "Il", verb: "va" },
+                        { pronoun: "Elle", verb: "va" },
+                        { pronoun: "On", verb: "va" },
+                        { pronoun: "Nous", verb: "allons" },
+                        { pronoun: "Vous", verb: "allez" },
+                        { pronoun: "Ils", verb: "vont" },
+                        { pronoun: "Elles", verb: "vont" }
+                    ]
+                },
+                {
+                    title: "Faire (Fare)",
+                    rows: [
+                        { pronoun: "Je", verb: "fais" },
+                        { pronoun: "Tu", verb: "fais" },
+                        { pronoun: "Il", verb: "fait" },
+                        { pronoun: "Elle", verb: "fait" },
+                        { pronoun: "On", verb: "fait" },
+                        { pronoun: "Nous", verb: "faisons" },
+                        { pronoun: "Vous", verb: "faites" },
+                        { pronoun: "Ils", verb: "font" },
+                        { pronoun: "Elles", verb: "font" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je vais bien.", italian: "Sto bene.", note: "Si usa Aller per la salute" },
+                { french: "Ils font du sport.", italian: "Loro fanno sport.", note: "Faire" },
+                { french: "Vous faites quoi ?", italian: "Cosa fate?", note: "Attenzione: 'Faites' non 'Faisez'!" }
+            ]
+        }
+    ]
+  },
+  [TopicId.VERBI_IR]: {
+    title: "Verbi Regolari in -IR (2° Gr.)",
+    description: "Il Secondo Gruppo. Sembrano difficili, ma sono regolarissimi se ricordi il trucco 'ISS'.",
+    sections: [
+        {
+            id: 'definition',
+            title: 'Definizione e Participio',
+            content: "I verbi del 2° gruppo finiscono in -IR e il loro participio presente finisce in -ISSANT (es: Finir -> Finissant). Questo li distingue dagli irregolari!",
+            examples: [
+                { french: 'Finir (Finissant)', italian: 'Finire', note: '2° Gruppo (Regolare)' },
+                { french: 'Partir (Partant)', italian: 'Partire', note: '3° Gruppo (Irregolare) - Niente ISS' }
+            ]
+        },
+        {
+            id: 'tech',
+            title: 'La Tecnica (Togli e Aggiungi)',
+            content: "Questi verbi finiscono in -IR all'infinito (es. Finir). Per coniugarli, togli la 'R' o la 'IR' e aggiungi le desinenze (-is, -is, -it, -issons, -issez, -issent).",
+            examples: [
+                { french: 'Finir -> Je finis', italian: 'Finire -> Io finisco', note: 'Togli R, aggiungi S.' },
+                { french: 'Choisir -> Tu choisis', italian: 'Scegliere -> Tu scegli', note: 'Uguale a Je.' },
+                { french: 'Grossir -> Il grossit', italian: 'Ingrassare -> Lui ingrassa', note: 'La T finale.' }
+            ]
+        },
+        {
+            id: 'bridge',
+            title: "Il Ponte 'ISS' (Fondamentale!)",
+            content: "Questa è la chiave. Al plurale (Nous, Vous, Ils), prima della desinenza spunta un doppio 'SS'. Questo suono allungato è ciò che distingue il 2° gruppo dagli irregolari.",
+            examples: [
+                { french: 'Nous finissons', italian: 'Noi finiamo', note: 'Fin + ISS + ons' },
+                { french: 'Vous choisissez', italian: 'Voi scegliete', note: 'Chois + ISS + ez' },
+                { french: 'Ils grossissent', italian: 'Loro ingrassano', note: 'Gross + ISS + ent' }
+            ]
+        },
+        {
+            id: 'pronunciation',
+            title: "Segreti di Pronuncia",
+            content: "Al singolare (Je, Tu, Il) la consonante finale (s, t) NON si legge. Al plurale, la desinenza -ENT (Ils finissent) è muta, ma devi far sentire forte il suono 'ISS'.",
+            examples: [
+                { french: 'Je finis', italian: 'Suono tronco (Finì).', note: 'Pronuncia: "Finì". La S è muta.' },
+                { french: 'Il finit', italian: 'Suono uguale a Je/Tu.', note: 'Pronuncia: "Finì". La T è muta.' },
+                { french: 'Ils finissent', italian: 'SS sonoro, ENT muto.', note: 'Pronuncia: "Finìss". Non dire "Finissenté"!' }
+            ]
+        },
+        {
+            id: 'tables',
+            title: "Tabelle di Coniugazione",
+            content: "Ecco la coniugazione completa dei verbi più importanti. Nota come seguono tutti lo stesso schema.",
+            examples: [],
+            conjugationTables: [
+                {
+                    title: "Finir (Finire)",
+                    rows: [
+                        { pronoun: "Je", verb: "finis" },
+                        { pronoun: "Tu", verb: "finis" },
+                        { pronoun: "Il", verb: "finit" },
+                        { pronoun: "Elle", verb: "finit" },
+                        { pronoun: "On", verb: "finit" },
+                        { pronoun: "Nous", verb: "finissons" },
+                        { pronoun: "Vous", verb: "finissez" },
+                        { pronoun: "Ils", verb: "finissent" },
+                        { pronoun: "Elles", verb: "finissent" }
+                    ]
+                },
+                {
+                    title: "Grossir (Ingrassare)",
+                    rows: [
+                        { pronoun: "Je", verb: "grossis" },
+                        { pronoun: "Tu", verb: "grossis" },
+                        { pronoun: "Il", verb: "grossit" },
+                        { pronoun: "Elle", verb: "grossit" },
+                        { pronoun: "On", verb: "grossit" },
+                        { pronoun: "Nous", verb: "grossissons" },
+                        { pronoun: "Vous", verb: "grossissez" },
+                        { pronoun: "Ils", verb: "grossissent" },
+                        { pronoun: "Elles", verb: "grossissent" }
+                    ]
+                },
+                {
+                    title: "Choisir (Scegliere)",
+                    rows: [
+                        { pronoun: "Je", verb: "choisis" },
+                        { pronoun: "Tu", verb: "choisis" },
+                        { pronoun: "Il", verb: "choisit" },
+                        { pronoun: "Elle", verb: "choisit" },
+                        { pronoun: "On", verb: "choisit" },
+                        { pronoun: "Nous", verb: "choisissons" },
+                        { pronoun: "Vous", verb: "choisissez" },
+                        { pronoun: "Ils", verb: "choisissent" },
+                        { pronoun: "Elles", verb: "choisissent" }
+                    ]
+                }
+            ]
+        }
+    ]
+  },
+  [TopicId.VERBI_3_GROUP]: {
+    title: "Verbi del 3° Gruppo (Irregolari)",
+    description: "Il cestino dei verbi. Qui trovi -RE, -OIR e gli -IR irregolari. Bisogna studiarli a memoria!",
+    sections: [
+        {
+            id: 'intro_3',
+            title: "Le Tre Famiglie",
+            content: "Questo gruppo include tutti i verbi che non sono nel 1° o nel 2°. Si dividono principalmente in tre sottogruppi.",
+            examples: [
+                { french: "Dormir / Partir / Sortir", italian: "Dormire/Partire/Uscire", note: "Finiscono in -IR ma niente 'ISS'" },
+                { french: "Prendre / Attendre / Boire", italian: "Prendere/Attendere/Bere", note: "Finiscono in -RE" },
+                { french: "Pouvoir / Vouloir / Voir", italian: "Potere/Volere/Vedere", note: "Finiscono in -OIR" }
+            ]
+        },
+        {
+            id: 'ir_irreg',
+            title: "Gli Irregolari in -IR (Partir)",
+            content: "A differenza di Finir, questi verbi perdono l'ultima lettera della radice al singolare.",
+            conjugationTables: [
+                {
+                    title: "Partir (Partire)",
+                    rows: [
+                        { pronoun: "Je", verb: "pars" },
+                        { pronoun: "Tu", verb: "pars" },
+                        { pronoun: "Il", verb: "part" },
+                        { pronoun: "Elle", verb: "part" },
+                        { pronoun: "On", verb: "part" },
+                        { pronoun: "Nous", verb: "partons" },
+                        { pronoun: "Vous", verb: "partez" },
+                        { pronoun: "Ils", verb: "partent" },
+                        { pronoun: "Elles", verb: "partent" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je pars.", italian: "Io parto.", note: "S compare, T sparisce" },
+                { french: "Nous partons.", italian: "Noi partiamo.", note: "Niente 'ISS'!" }
+            ]
+        },
+        {
+            id: 're_irreg',
+            title: "I verbi in -RE (Prendre)",
+            content: "Molto comuni. Attenzione alla 3ª persona plurale che raddoppia la 'n'.",
+            conjugationTables: [
+                {
+                    title: "Prendre (Prendere)",
+                    rows: [
+                        { pronoun: "Je", verb: "prends" },
+                        { pronoun: "Tu", verb: "prends" },
+                        { pronoun: "Il", verb: "prend" },
+                        { pronoun: "Elle", verb: "prend" },
+                        { pronoun: "On", verb: "prend" },
+                        { pronoun: "Nous", verb: "prenons" },
+                        { pronoun: "Vous", verb: "prenez" },
+                        { pronoun: "Ils", verb: "prennent" },
+                        { pronoun: "Elles", verb: "prennent" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je prends le bus.", italian: "Prendo l'autobus.", note: "Prendre" },
+                { french: "Ils prennent un café.", italian: "Prendono un caffè.", note: "Doube 'n'" }
+            ]
+        },
+        {
+            id: 'oir_irreg',
+            title: "I verbi in -OIR (Pouvoir/Vouloir)",
+            content: "Questi cambiano la vocale e usano la 'x' al singolare!",
+            conjugationTables: [
+                {
+                    title: "Pouvoir (Potere)",
+                    rows: [
+                        { pronoun: "Je", verb: "peux" },
+                        { pronoun: "Tu", verb: "peux" },
+                        { pronoun: "Il", verb: "peut" },
+                        { pronoun: "Elle", verb: "peut" },
+                        { pronoun: "On", verb: "peut" },
+                        { pronoun: "Nous", verb: "pouvons" },
+                        { pronoun: "Vous", verb: "pouvez" },
+                        { pronoun: "Ils", verb: "peuvent" },
+                        { pronoun: "Elles", verb: "peuvent" }
+                    ]
+                },
+                {
+                    title: "Vouloir (Volere)",
+                    rows: [
+                        { pronoun: "Je", verb: "veux" },
+                        { pronoun: "Tu", verb: "veux" },
+                        { pronoun: "Il", verb: "veut" },
+                        { pronoun: "Elle", verb: "veut" },
+                        { pronoun: "On", verb: "veut" },
+                        { pronoun: "Nous", verb: "voulons" },
+                        { pronoun: "Vous", verb: "voulez" },
+                        { pronoun: "Ils", verb: "veulent" },
+                        { pronoun: "Elles", verb: "veulent" }
+                    ]
+                }
+            ],
+            examples: [
+                { french: "Je peux venir.", italian: "Posso venire.", note: "Pouvoir" },
+                { french: "Il veut partir.", italian: "Vuole partire.", note: "Vouloir" }
+            ]
+        }
     ]
   },
   [TopicId.IMPERATIF]: {
@@ -238,93 +950,6 @@ const courseContent: Record<TopicId, { title: string; description: string; secti
       }
     ]
   },
-  [TopicId.VERBI_IR]: {
-    title: "Verbi Regolari in -IR",
-    description: "Il Secondo Gruppo. Sembrano difficili, ma sono regolarissimi se ricordi il trucco 'ISS'.",
-    sections: [
-        {
-            id: 'tech',
-            title: 'La Tecnica (Togli e Aggiungi)',
-            content: "Questi verbi finiscono in -IR all'infinito (es. Finir). Per coniugarli, togli la 'R' o la 'IR' e aggiungi le desinenze. Ma attenzione al plurale!",
-            examples: [
-                { french: 'Finir -> Je finis', italian: 'Finire -> Io finisco', note: 'Togli R, aggiungi S.' },
-                { french: 'Choisir -> Tu choisis', italian: 'Scegliere -> Tu scegli', note: 'Uguale a Je.' },
-                { french: 'Grossir -> Il grossit', italian: 'Ingrassare -> Lui ingrassa', note: 'La T finale.' }
-            ]
-        },
-        {
-            id: 'bridge',
-            title: "Il Ponte 'ISS' (Fondamentale!)",
-            content: "Questa è la chiave. Al plurale (Nous, Vous, Ils), prima della desinenza spunta un doppio 'SS'. Questo suono allungato è ciò che distingue il 2° gruppo dagli irregolari.",
-            examples: [
-                { french: 'Nous finissons', italian: 'Noi finiamo', note: 'Fin + ISS + ons' },
-                { french: 'Vous choisissez', italian: 'Voi scegliete', note: 'Chois + ISS + ez' },
-                { french: 'Ils grossissent', italian: 'Loro ingrassano', note: 'Gross + ISS + ent' }
-            ]
-        },
-        {
-            id: 'pronunciation',
-            title: "Segreti di Pronuncia",
-            content: "Al singolare (Je, Tu, Il) la consonante finale (s, t) NON si legge. Al plurale, la desinenza -ENT (Ils finissent) è muta, ma devi far sentire forte il suono 'ISS'.",
-            examples: [
-                { french: 'Je finis', italian: 'Suono tronco (Finì).', note: 'Pronuncia: "Finì". La S è muta.' },
-                { french: 'Il finit', italian: 'Suono uguale a Je/Tu.', note: 'Pronuncia: "Finì". La T è muta.' },
-                { french: 'Ils finissent', italian: 'SS sonoro, ENT muto.', note: 'Pronuncia: "Finìss". Non dire "Finissenté"!' }
-            ]
-        },
-        {
-            id: 'tables',
-            title: "Tabelle di Coniugazione",
-            content: "Ecco la coniugazione completa dei verbi più importanti. Nota come seguono tutti lo stesso schema.",
-            examples: [],
-            conjugationTables: [
-                {
-                    title: "Finir (Finire) - Il Modello",
-                    rows: [
-                        { pronoun: "Je", verb: "finis" },
-                        { pronoun: "Tu", verb: "finis" },
-                        { pronoun: "Il/Elle", verb: "finit" },
-                        { pronoun: "Nous", verb: "finissons" },
-                        { pronoun: "Vous", verb: "finissez" },
-                        { pronoun: "Ils/Elles", verb: "finissent" }
-                    ]
-                },
-                {
-                    title: "Choisir (Scegliere)",
-                    rows: [
-                        { pronoun: "Je", verb: "choisis" },
-                        { pronoun: "Tu", verb: "choisis" },
-                        { pronoun: "Il/Elle", verb: "choisit" },
-                        { pronoun: "Nous", verb: "choisissons" },
-                        { pronoun: "Vous", verb: "choisissez" },
-                        { pronoun: "Ils/Elles", verb: "choisissent" }
-                    ]
-                },
-                {
-                    title: "Réfléchir (Riflettere)",
-                    rows: [
-                        { pronoun: "Je", verb: "réfléchis" },
-                        { pronoun: "Tu", verb: "réfléchis" },
-                        { pronoun: "Il/Elle", verb: "réfléchit" },
-                        { pronoun: "Nous", verb: "réfléchissons" },
-                        { pronoun: "Vous", verb: "réfléchissez" },
-                        { pronoun: "Ils/Elles", verb: "réfléchissent" }
-                    ]
-                }
-            ]
-        },
-        {
-            id: 'trap',
-            title: "La Trappola: Non tutti gli -IR...",
-            content: "Attenzione! Verbi come 'Venir', 'Dormir', 'Partir' finiscono in -IR ma sono IRREGOLARI (3° gruppo). Come li riconosci? Non hanno il ponte 'ISS'.",
-            examples: [
-                { french: 'Nous partons', italian: 'Noi partiamo', note: 'NON partissons! (Irregolare)' },
-                { french: 'Nous dormons', italian: 'Noi dormiamo', note: 'NON dormissons! (Irregolare)' },
-                { french: 'Nous finissons', italian: 'Noi finiamo', note: 'Questo è 2° gruppo!' }
-            ]
-        }
-    ]
-  },
   [TopicId.ORIENTATION]: {
       title: "Orientamento e Città",
       description: "Impara a chiedere indicazioni, usare le preposizioni di luogo e muoverti in città.",
@@ -359,18 +984,21 @@ const courseContent: Record<TopicId, { title: string; description: string; secti
               examples: [
                   { french: "Allez tout droit.", italian: "Andate dritto.", note: "Sempre dritto" },
                   { french: "Tournez à gauche / à droite.", italian: "Girate a sinistra / a destra.", note: "" },
-                  { french: "Traversez le pont / la place.", italian: "Attraversate il ponte / la piazza.", note: "" },
-                  { french: "Prenez la deuxième rue à droite.", italian: "Prendete la seconda strada a destra.", note: "" }
+                  { french: "Traversez le pont / la piazza.", italian: "Attraversate il ponte / la piazza.", note: "" },
+                  { french: "Prenez la deuxième rue à droite.", italian: "Prendete la seconda strada a destra.", note: "" },
+                  { french: "Vous y êtes.", italian: "Siete arrivati.", note: "Fine percorso" }
               ]
           },
           {
               id: 'places_transport',
-              title: "IV. Luoghi e Trasporti",
-              content: "Vocabolario essenziale per muoversi in città.",
+              title: "IV. Lessico: Muoversi in Città",
+              content: "Vocabolario essenziale per muoversi e orientarsi.",
               examples: [
-                  { french: "La Gare / L'Hôtel de Ville / La Mairie", italian: "Stazione / Comune / Municipio", note: "Luoghi pubblici" },
-                  { french: "Je vais en voiture / en bus / en métro.", italian: "Vado in auto / bus / metro.", note: "EN per mezzi chiusi" },
-                  { french: "Je vais à pied / à vélo / à moto.", italian: "Vado a piedi / bici / moto.", note: "À per mezzi aperti" }
+                  { french: "Se déplacer / Bouger", italian: "Spostarsi / Muoversi", note: "Verbi chiave" },
+                  { french: "Un carrefour / Un feu rouge", italian: "Incrocio / Semaforo", note: "Strada" },
+                  { french: "Je vais en voiture / en bus.", italian: "Vado in auto / bus.", note: "EN (dentro)" },
+                  { french: "Je vais à pied / à vélo.", italian: "Vado a piedi / in bici.", note: "À (sopra/eccezione)" },
+                  { french: "Une piste cyclable", italian: "Pista ciclabile", note: "Per le bici" }
               ]
           }
       ]
@@ -431,7 +1059,7 @@ Nous sommes avec Clémence au quartier Confluence. Elle a accepté de répondre 
 - On peut parler d'un éco-quartier ?
 - Oui, c'est vrai que... je connais pas tout leur plan, mais en termes de service de propreté, c'est très bien mené. Entre autres, les règles sur le recyclage qui sont très strictes ici.
 - Confluence est très innovateur. Vous en pensez quoi ?
-- Alors en termes d'architecture, oui ! C'est un délire d'architecte, ce quartier ! En termes de vie pour tous ceux qui habitent ici, c'est vrai qu'ils ont très bien conçu leur quartier. Entre la proximité avec le centre-ville, le centre commercial où on peut trouver absolument tout ce dont on a besoin... Même comme le quartier a été conçu, c'est vrai que c'est assez novateur et très bien conçu.
+- Alors en termes de architecture, oui ! C'est un délire d'architecte, ce quartier ! En termes de vie pour tous ceux qui habitent ici, c'est vrai qu'ils ont très bien conçu leur quartier. Entre la proximité avec le centre-ville, le centre commercial où on peut trouver absolument tout ce dont on a besoin... Même comme le quartier a été conçu, c'est vrai que c'est assez novateur et très bien conçu.
 - C'est pour ça que vous avez choisi de vivre ici ?
 - Tout à fait.
 - Qu'est-ce qu'on peut faire comme loisirs dans le quartier de Confluence ?
@@ -457,8 +1085,21 @@ Et voilà, c'était le quartier Confluence à Lyon. À très bientôt pour une n
               ]
           },
           {
+              id: 'lexique_lyon',
+              title: "IV. Glossario: Città ed Ecologia",
+              content: "Parole chiave per capire Lione, la sua storia e il suo futuro sostenibile.",
+              examples: [
+                  { french: "Le confluent / La jonction", italian: "La confluenza (di fiumi)", note: "Dove si uniscono" },
+                  { french: "Une zone dégradée", italian: "Una zona degradata (ex industriale)", note: "Prima del restauro" },
+                  { french: "Logique durable / Éco-quartier", italian: "Sostenibilità / Eco-quartiere", note: "Ecologia" },
+                  { french: "Végétalisation", italian: "Vegetalizzazione (piantare alberi)", note: "Verde urbano" },
+                  { french: "Isolation thermique", italian: "Isolamento termico", note: "Risparmio energia" },
+                  { french: "Le cinématographe", italian: "Il cinematografo", note: "Fratelli Lumière (1895)" }
+              ]
+          },
+          {
               id: 'food',
-              title: "IV. Gastronomie (Les Bouchons)",
+              title: "V. Gastronomie (Les Bouchons)",
               content: "Non puoi visitare Lyon senza mangiare in un 'Bouchon', le trattorie tipiche. Qui si mangiano piatti ricchi e tradizionali. La città è considerata la capitale mondiale della gastronomia.",
               examples: [
                   { french: "On mange dans un bouchon lyonnais.", italian: "Mangiamo in una trattoria lionese.", note: "Vocabolario" },
@@ -467,6 +1108,29 @@ Et voilà, c'était le quartier Confluence à Lyon. À très bientôt pour une n
           }
       ]
   }
+};
+
+// Helper to get context icon
+const getContextIcon = (text: string) => {
+    const t = text.toLowerCase();
+    if (t.includes('mang') || t.includes('faim') || t.includes('boir') || t.includes('bouchon') || t.includes('gâteau') || t.includes('délicieux')) return <Utensils size={24} className="text-orange-500"/>;
+    if (t.includes('voiture') || t.includes('bus') || t.includes('train') || t.includes('métro') || t.includes('tram') || t.includes('gare')) return <Train size={24} className="text-blue-500"/>;
+    if (t.includes('vélo') || t.includes('cyclable')) return <Bike size={24} className="text-green-500"/>;
+    if (t.includes('avion')) return <Plane size={24} className="text-sky-500"/>;
+    if (t.includes('aim') || t.includes('ador') || t.includes('coeur')) return <Heart size={24} className="text-red-500"/>;
+    if (t.includes('regard') || t.includes('voir') || t.includes('yeux') || t.includes('lunettes')) return <Eye size={24} className="text-purple-500"/>;
+    if (t.includes('maison') || t.includes('habiter') || t.includes('rue') || t.includes('ville')) return <Home size={24} className="text-indigo-500"/>;
+    if (t.includes('cinéma') || t.includes('film') || t.includes('photo')) return <Camera size={24} className="text-pink-500"/>;
+    if (t.includes('musée') || t.includes('art') || t.includes('basilique') || t.includes('château')) return <Landmark size={24} className="text-amber-600"/>;
+    if (t.includes('chant') || t.includes('musique')) return <Music size={24} className="text-teal-500"/>;
+    if (t.includes('soleil') || t.includes('été') || t.includes('chaud')) return <Sun size={24} className="text-yellow-500"/>;
+    if (t.includes('café') || t.includes('thé')) return <Coffee size={24} className="text-amber-800"/>;
+    if (t.includes('acheter') || t.includes('boutique') || t.includes('magasin') || t.includes('sac') || t.includes('vêtement') || t.includes('robe') || t.includes('pantalon')) return <ShoppingBag size={24} className="text-rose-500"/>;
+    if (t.includes('ami') || t.includes('parent') || t.includes('famille') || t.includes('enfant') || t.includes('gens')) return <Users size={24} className="text-cyan-600"/>;
+    if (t.includes('content') || t.includes('heureux') || t.includes('ravi')) return <Smile size={24} className="text-green-400"/>;
+    if (t.includes('heure') || t.includes('temps') || t.includes('matin') || t.includes('soir')) return <Clock size={24} className="text-slate-500"/>;
+    
+    return <Zap size={24} className="text-yellow-400"/>; // Default
 };
 
 interface LearnViewProps {
@@ -486,6 +1150,43 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
      window.speechSynthesis.onvoiceschanged = load;
      return () => { window.speechSynthesis.onvoiceschanged = null; }
   }, []);
+
+  // Auto-read content on mount
+  useEffect(() => {
+    const speakQueue = (text: string, lang: 'it-IT' | 'fr-FR') => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.rate = 0.95;
+        
+        // Try to find best voice from the state or getVoices directly
+        const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+        const preferredVoice = availableVoices.find(v => v.lang === lang && v.name.includes('Google')) ||
+                               availableVoices.find(v => v.lang.startsWith(lang.split('-')[0]));
+        
+        if (preferredVoice) u.voice = preferredVoice;
+        window.speechSynthesis.speak(u);
+    };
+
+    // Slight delay to allow transition
+    const timer = setTimeout(() => {
+        window.speechSynthesis.cancel();
+        // Title (IT)
+        speakQueue(data.title, 'it-IT');
+        // Description (IT)
+        speakQueue(data.description, 'it-IT');
+        
+        // First Section Title & Content (IT)
+        if (data.sections.length > 0) {
+            speakQueue(data.sections[0].title, 'it-IT');
+            speakQueue(data.sections[0].content, 'it-IT');
+        }
+    }, 800);
+
+    return () => {
+        clearTimeout(timer);
+        window.speechSynthesis.cancel();
+    };
+  }, [topicId, voices.length]); // Depend on voices.length to retry if voices load late
 
   const toggleSection = (id: string) => {
     setOpenSection(openSection === id ? null : id);
@@ -617,7 +1318,11 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
                                     onClick={() => playAudio(`${row.pronoun} ${row.verb}`)}
                                     className="w-full flex justify-between items-center p-3 hover:bg-blue-50 transition-colors group text-left"
                                 >
-                                    <span className="font-bold text-slate-500 w-1/3">{row.pronoun}</span>
+                                    <div className="flex items-center gap-2 w-1/3">
+                                        {(row.pronoun.startsWith('Je') || row.pronoun.startsWith('Tu') || row.pronoun.startsWith('Il') || row.pronoun.startsWith('Elle')) && <User size={14} className="text-slate-400"/>}
+                                        {(row.pronoun.startsWith('Nous') || row.pronoun.startsWith('Vous') || row.pronoun.startsWith('Ils')) && <Users size={14} className="text-slate-400"/>}
+                                        <span className="font-bold text-slate-500">{row.pronoun}</span>
+                                    </div>
                                     <span className="font-bold text-slate-800 text-lg w-2/3">{row.verb}</span>
                                     <Volume2 size={16} className="text-french-blue opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
@@ -628,8 +1333,15 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {lesson.examples.map((ex, idx) => (
-                    <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-200 hover:border-french-blue transition-all cursor-default group hover:bg-blue-50/30">
-                      <div className="flex items-center justify-between mb-2">
+                    <div 
+                        key={idx} 
+                        onClick={() => playAudio(ex.french)}
+                        className="bg-slate-50 p-5 rounded-xl border border-slate-200 hover:border-french-blue hover:bg-blue-50/30 cursor-pointer transition-all group relative"
+                    >
+                      <div className="absolute -top-3 -right-3 bg-white p-2 rounded-full shadow-md border border-slate-100 group-hover:scale-110 transition-transform">
+                          {getContextIcon(ex.french)}
+                      </div>
+                      <div className="flex items-center justify-between mb-2 pr-4">
                         <span className="font-serif text-xl font-bold text-french-blue">{ex.french}</span>
                         <button 
                            onClick={(e) => {

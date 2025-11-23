@@ -9,7 +9,14 @@ export enum ViewState {
 export enum TopicId {
   COD = 'COD',
   IMPERATIF = 'IMPERATIF',
+  VERBI_ER = 'VERBI_ER',
   VERBI_IR = 'VERBI_IR',
+  VERBI_TOP = 'VERBI_TOP',
+  VERBI_3_GROUP = 'VERBI_3_GROUP',
+  NEGATION = 'NEGATION',
+  GENDER_NUMBER = 'GENDER_NUMBER',
+  FAMILY = 'FAMILY',
+  DESCRIPTION = 'DESCRIPTION',
   LYON = 'LYON',
   ORIENTATION = 'ORIENTATION',
 }
@@ -39,7 +46,8 @@ export interface LessonSection {
 }
 
 export interface QuizQuestion {
-  question: string;
+  type: 'multiple-choice' | 'cloze'; // New field for question type
+  question: string; // For cloze, this will contain the sentence with "_______"
   options: string[];
   correctAnswer: string;
   explanation: string;
@@ -52,12 +60,24 @@ export interface QuizQuestion {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
-  isCorrect?: boolean;
-  correction?: string;
+  // Fields for grammar correction
+  hasError?: boolean;
+  correction?: {
+    sentence: string;
+    explanation: string;
+  };
 }
 
-export enum QuizDifficulty {
-  BEGINNER = 'Principiante',
-  INTERMEDIATE = 'Intermedio',
-  ADVANCED = 'Avanzato'
+export enum UserLevel {
+  A1 = 'A1 (Principiante)',
+  A2 = 'A2 (Elementare)',
+  B1 = 'B1 (Intermedio)',
+  B2 = 'B2 (Intermedio Alto)',
+  C1 = 'C1 (Avanzato)',
+  C2 = 'C2 (Madrelingua)'
+}
+
+export interface SessionConfig {
+    level: UserLevel;
+    timeMinutes: number;
 }
