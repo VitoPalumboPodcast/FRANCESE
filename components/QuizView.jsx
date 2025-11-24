@@ -1,18 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { generateQuizQuestions } from '../services/geminiService';
-import { QuizQuestion, UserLevel, TopicId } from '../types';
+import { UserLevel, TopicId } from '../types';
 import { Loader2, Check, X, Award, ArrowLeft, Volume2, Flame, Sparkles, RotateCcw, Clock, Zap, Brain, Utensils, Train, Bike, Plane, Heart, Eye, Home, Camera, Landmark, Music, Sun, Coffee, ShoppingBag, Users, Smile } from 'lucide-react';
 
-interface QuizViewProps {
-    topicId: TopicId;
-    onBack: () => void;
-}
-
-type QuizState = 'SETUP' | 'LOADING' | 'PLAYING' | 'RESULT';
-
 // Helper to get context icon (Duplicated for safety, ideally shared utility)
-const getContextIcon = (text: string) => {
+const getContextIcon = (text) => {
     const t = text.toLowerCase();
     if (t.includes('mang') || t.includes('faim') || t.includes('boir') || t.includes('bouchon') || t.includes('gâteau') || t.includes('délicieux')) return <Utensils size={32} className="text-orange-500"/>;
     if (t.includes('voiture') || t.includes('bus') || t.includes('train') || t.includes('métro') || t.includes('tram') || t.includes('gare')) return <Train size={32} className="text-blue-500"/>;
@@ -33,20 +26,20 @@ const getContextIcon = (text: string) => {
     return <Brain size={32} className="text-slate-400"/>; // Default
 };
 
-const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
-  const [viewState, setViewState] = useState<QuizState>('SETUP');
-  
+const QuizView = ({ topicId, onBack }) => {
+  const [viewState, setViewState] = useState('SETUP');
+
   // Session Configuration State
-  const [selectedLevel, setSelectedLevel] = useState<UserLevel>(UserLevel.A2);
-  const [selectedTime, setSelectedTime] = useState<number>(5); // Minutes
-  
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState(UserLevel.A2);
+  const [selectedTime, setSelectedTime] = useState(5); // Minutes
+
+  const [questions, setQuestions] = useState([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [streak, setStreak] = useState(0);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [voices, setVoices] = useState([]);
 
   // TTS Setup
   useEffect(() => {
@@ -56,7 +49,7 @@ const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
        return () => { window.speechSynthesis.onvoiceschanged = null; }
     }, []);
 
-  const playAudio = (text: string) => {
+  const playAudio = (text) => {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/\//g, ',')); 
       u.lang = 'fr-FR';
@@ -68,9 +61,10 @@ const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
       window.speechSynthesis.speak(u);
   }
 
-  const playSound = (type: 'correct' | 'wrong' | 'complete') => {
+  const playSound = (type) => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -149,7 +143,7 @@ const QuizView: React.FC<QuizViewProps> = ({ topicId, onBack }) => {
     }
   };
 
-  const handleAnswer = (option: string) => {
+  const handleAnswer = (option) => {
     if (isAnswerChecked) return;
     setSelectedAnswer(option);
     setIsAnswerChecked(true);

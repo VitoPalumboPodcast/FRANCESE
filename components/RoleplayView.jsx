@@ -4,26 +4,7 @@ import { Send, Bot, User, ArrowLeft, RefreshCw, Mic, MicOff, AlertCircle, Dumbbe
 import { getTutorResponse } from '../services/geminiService';
 import { TopicId } from '../types';
 
-interface ChatBubbleProps {
-  text: string;
-  isUser: boolean;
-  correction?: { sentence: string; explanation: string };
-}
-
-interface RoleplayViewProps {
-    topicId: TopicId;
-    onBack: () => void;
-}
-
-// Type definition for Web Speech API
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
-const ChatBubble: React.FC<ChatBubbleProps> = ({ text, isUser, correction }) => (
+const ChatBubble = ({ text, isUser, correction }) => (
   <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6 animate-in slide-in-from-bottom-2 duration-300 flex-col`}>
     
     {/* Correction Box appearing BEFORE the bot response if it exists */}
@@ -239,11 +220,11 @@ const PERSONAS = {
     }
 };
 
-const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
+const RoleplayView = ({ topicId, onBack }) => {
   const [input, setInput] = useState('');
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [voices, setVoices] = useState([]);
   const [isListening, setIsListening] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState(null);
   
   const persona = PERSONAS[topicId];
 
@@ -253,7 +234,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
       return opts[Math.floor(Math.random() * opts.length)];
   }, [persona]);
 
-  const [messages, setMessages] = useState<{role: string, text: string, correction?: { sentence: string, explanation: string }}[]>([
+  const [messages, setMessages] = useState([
     { role: 'model', text: initialMessage }
   ]);
   
@@ -264,7 +245,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
   }, [messages]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef(null);
 
   // --- TTS SETUP ---
   useEffect(() => {
@@ -282,7 +263,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
     }
   }, []);
 
-  const getBestVoice = (lang: string) => {
+    const getBestVoice = (lang) => {
       // 1. Prefer "Google" voices (usually higher quality on Chrome)
       let voice = voices.find(v => v.lang.startsWith(lang) && v.name.includes('Google'));
       // 2. Fallback to any voice matching language
@@ -290,7 +271,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
       return voice;
   }
 
-  const speak = (text: string, lang: string, isPierre: boolean) => {
+    const speak = (text, lang, isPierre) => {
       if (!text.trim()) return;
       const u = new SpeechSynthesisUtterance(text);
       const voice = getBestVoice(lang);
@@ -320,7 +301,7 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async (arg?: any) => {
+    const handleSend = async (arg) => {
     // Allow calling with a specific string (from speech recognizer) or as an event handler
     const textToSend = typeof arg === 'string' ? arg : input;
     
@@ -432,13 +413,13 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
         setIsListening(false);
       };
 
-      recognition.onresult = (event: any) => {
+        recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setInput(transcript); // Visual feedback
         handleSend(transcript); // Auto-send the recognized text
       };
 
-      recognition.onerror = (event: any) => {
+        recognition.onerror = (event) => {
         console.error("Speech error", event.error);
         setIsListening(false);
         if (event.error === 'not-allowed') {

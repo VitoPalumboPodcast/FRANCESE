@@ -3,12 +3,7 @@ import React from 'react';
 import { ViewState } from '../types';
 import { Map, BookOpen, LogOut, GraduationCap } from 'lucide-react';
 
-interface SidebarProps {
-  currentView: ViewState;
-  setView: (view: ViewState) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
+const Sidebar = ({ currentView, setView }) => {
   // Simplified sidebar as navigation is now mostly driven by the Course Map
   // Keeping it for global context and potential future features (Settings, Profile)
   

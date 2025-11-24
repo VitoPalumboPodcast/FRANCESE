@@ -4,11 +4,11 @@ import Sidebar from './components/Sidebar';
 import LearnView from './components/LearnView';
 import QuizView from './components/QuizView';
 import RoleplayView from './components/RoleplayView';
-import { ViewState, TopicId, ModuleData } from './types';
+import { ViewState, TopicId } from './types';
 import { Sparkles, BookOpen, MessageSquare, Lock, ArrowRight, Check } from 'lucide-react';
 
 // Course Data
-const modules: ModuleData[] = [
+const modules = [
     {
         id: TopicId.PRONUNCIATION,
         title: "0. Basi di Pronuncia",
@@ -139,7 +139,7 @@ const modules: ModuleData[] = [
     }
 ];
 
-const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => void }> = ({ onSelectModule }) => (
+const CourseMap = ({ onSelectModule }) => (
   <div className="p-6 md:p-10 max-w-5xl mx-auto pb-32">
     <div className="mb-12 text-center">
       <h1 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 mb-4">
@@ -224,10 +224,10 @@ const CourseMap: React.FC<{ onSelectModule: (m: TopicId, view: ViewState) => voi
 );
 
 function App() {
-  const [currentView, setCurrentView] = useState<ViewState>(ViewState.HOME);
-  const [activeTopic, setActiveTopic] = useState<TopicId>(TopicId.COD);
+  const [currentView, setCurrentView] = useState(ViewState.HOME);
+  const [activeTopic, setActiveTopic] = useState(TopicId.COD);
 
-  const handleModuleSelect = (topic: TopicId, view: ViewState) => {
+  const handleModuleSelect = (topic, view) => {
       setActiveTopic(topic);
       setCurrentView(view);
   };

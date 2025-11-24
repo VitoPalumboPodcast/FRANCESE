@@ -1,10 +1,12 @@
 
-import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { QuizQuestion, UserLevel, TopicId } from "../types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { UserLevel, TopicId } from "../types";
 
 // Initialize client only when needed to ensure API key is present
 const getAIClient = () => {
-  const apiKey = process.env.API_KEY;
+  const apiKey =
+    (typeof process !== 'undefined' && (process.env.GEMINI_API_KEY || process.env.API_KEY)) ||
+    (typeof window !== 'undefined' && window.GEMINI_API_KEY);
   if (!apiKey) {
     console.error("API Key missing");
     return null;
@@ -12,11 +14,11 @@ const getAIClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export const generateQuizQuestions = async (topic: TopicId, level: UserLevel, count: number): Promise<QuizQuestion[]> => {
+export const generateQuizQuestions = async (topic, level, count) => {
   const ai = getAIClient();
   if (!ai) return [];
 
-  const schema: Schema = {
+  const schema = {
     type: Type.ARRAY,
     items: {
       type: Type.OBJECT,
@@ -111,14 +113,14 @@ export const generateQuizQuestions = async (topic: TopicId, level: UserLevel, co
 
     const text = response.text;
     if (!text) return [];
-    return JSON.parse(text) as QuizQuestion[];
+    return JSON.parse(text);
   } catch (error) {
     console.error("Error generating quiz:", error);
     return [];
   }
 };
 
-export const getTutorResponse = async (history: {role: string, parts: {text: string}[]}[], userText: string, topic: TopicId) => {
+export const getTutorResponse = async (history, userText, topic) => {
     const ai = getAIClient();
     if(!ai) return "Errore API";
 
