@@ -1,27 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, Info, AlertTriangle, Type, ArrowLeft, Book, CheckCircle2, Volume2, PlayCircle, FileText, MapPin, Navigation, User, RefreshCcw, Car, PauseCircle, Utensils, Heart, Eye, Home, Camera, Music, Sun, Coffee, ShoppingBag, Users, Smile, Clock, Zap, Bike, Train, Plane, Landmark, Hand, Calculator, Box } from 'lucide-react';
-import { LessonSection, TopicId } from '../types';
+import { TopicId } from '../types';
 
 // -- Interactive Map Component --
-const CityMapGame: React.FC = () => {
-  
-  // Defined explicit types for buildings to render them differently
-  type BuildingType = 'standard' | 'L-shape' | 'park' | 'square' | 'complex';
-
-  interface MapObject {
-    id: string;
-    name: string;
-    type: BuildingType;
-    color: string;
-    // Grid position (1-4 to accommodate the river on the left)
-    col: number;
-    row: number;
-    // Visual tweaks
-    roofColor?: string;
-  }
-
-  const mapObjects: MapObject[] = [
+const CityMapGame = () => {
+  const mapObjects = [
     { id: 'gare', name: 'Gare', type: 'complex', color: 'bg-slate-300', col: 2, row: 1, roofColor: 'bg-slate-500' },
     { id: 'parc', name: 'Parc', type: 'park', color: 'bg-green-100', col: 3, row: 1 },
     { id: 'poste', name: 'Poste', type: 'standard', color: 'bg-yellow-100', col: 4, row: 1, roofColor: 'bg-yellow-400' },
@@ -73,12 +57,12 @@ const CityMapGame: React.FC = () => {
   ];
 
   const [currentChallengeIndex, setCurrentChallengeIndex] = useState(0);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState(null);
   const [success, setSuccess] = useState(false);
 
   const currentChallenge = challenges[currentChallengeIndex];
 
-  const handleBuildingClick = (b: MapObject) => {
+  const handleBuildingClick = (b) => {
     if (success) return;
     
     if (b.id === currentChallenge.targetId) {
@@ -249,7 +233,7 @@ const CityMapGame: React.FC = () => {
 
 
 // Content Database
-const courseContent: Record<TopicId, { title: string; description: string; sections: LessonSection[] }> = {
+const courseContent = {
   [TopicId.PRONUNCIATION]: {
       title: "Basi di Pronuncia",
       description: "I segreti per leggere e parlare come un vero francese: vocali, nasali e lettere mute.",
@@ -1289,7 +1273,7 @@ Et voilà, c'était le quartier Confluence à Lyon. À très bientôt pour une n
 };
 
 // Helper to get context icon
-const getContextIcon = (text: string) => {
+  const getContextIcon = (text) => {
     const t = text.toLowerCase();
     if (t.includes('mang') || t.includes('faim') || t.includes('boir') || t.includes('bouchon') || t.includes('gâteau') || t.includes('délicieux')) return <Utensils size={24} className="text-orange-500"/>;
     if (t.includes('voiture') || t.includes('bus') || t.includes('train') || t.includes('métro') || t.includes('tram') || t.includes('gare')) return <Train size={24} className="text-blue-500"/>;
@@ -1313,16 +1297,11 @@ const getContextIcon = (text: string) => {
     return <Zap size={24} className="text-yellow-400"/>; // Default
 };
 
-interface LearnViewProps {
-  topicId: TopicId;
-  onBack: () => void;
-}
-
-const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
+const LearnView = ({ topicId, onBack }) => {
   const data = courseContent[topicId];
-  const [openSection, setOpenSection] = useState<string | null>(data.sections[0].id);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [expandedTranscript, setExpandedTranscript] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState(data.sections[0].id);
+  const [voices, setVoices] = useState([]);
+  const [expandedTranscript, setExpandedTranscript] = useState(null);
 
   useEffect(() => {
      const load = () => setVoices(window.speechSynthesis.getVoices());
@@ -1333,7 +1312,7 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
 
   // Auto-read content on mount
   useEffect(() => {
-    const speakQueue = (text: string, lang: 'it-IT' | 'fr-FR') => {
+    const speakQueue = (text, lang) => {
         const u = new SpeechSynthesisUtterance(text);
         u.lang = lang;
         u.rate = 0.95;
@@ -1368,12 +1347,12 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
     };
   }, [topicId, voices.length]); // Depend on voices.length to retry if voices load late
 
-  const toggleSection = (id: string) => {
+    const toggleSection = (id) => {
     setOpenSection(openSection === id ? null : id);
     setExpandedTranscript(null); // Reset transcript view on section change
   };
 
-  const playAudio = (text: string) => {
+    const playAudio = (text) => {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/\//g, ',')); // Clean slashes
       u.lang = 'fr-FR';
