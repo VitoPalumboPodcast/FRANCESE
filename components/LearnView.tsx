@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Info, AlertTriangle, Type, ArrowLeft, Book, CheckCircle2, Volume2, PlayCircle, FileText, MapPin, Navigation, User, RefreshCcw, Car, PauseCircle, Utensils, Heart, Eye, Home, Camera, Music, Sun, Coffee, ShoppingBag, Users, Smile, Clock, Zap, Bike, Train, Plane, Landmark } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, AlertTriangle, Type, ArrowLeft, Book, CheckCircle2, Volume2, PlayCircle, FileText, MapPin, Navigation, User, RefreshCcw, Car, PauseCircle, Utensils, Heart, Eye, Home, Camera, Music, Sun, Coffee, ShoppingBag, Users, Smile, Clock, Zap, Bike, Train, Plane, Landmark, Hand, Calculator, Box } from 'lucide-react';
 import { LessonSection, TopicId } from '../types';
 
 // -- Interactive Map Component --
@@ -250,6 +250,184 @@ const CityMapGame: React.FC = () => {
 
 // Content Database
 const courseContent: Record<TopicId, { title: string; description: string; sections: LessonSection[] }> = {
+  [TopicId.PRONUNCIATION]: {
+      title: "Basi di Pronuncia",
+      description: "I segreti per leggere e parlare come un vero francese: vocali, nasali e lettere mute.",
+      sections: [
+          {
+              id: 'vowels',
+              title: "1. Le Vocali Composte",
+              content: "In francese, quando vedi due o tre vocali vicine, spesso formano un unico suono nuovo. Imparali a memoria!",
+              examples: [
+                  { french: "OU", italian: "U (come in 'tutto')", note: "Rouge (Rosso), Bonjour" },
+                  { french: "OI", italian: "UA (come in 'guanto')", note: "Moi (Io), Toi (Tu), Roi (Re)" },
+                  { french: "AU / EAU", italian: "O chiusa (come in 'sole')", note: "Auto, Beau (Bello), Eau (Acqua)" },
+                  { french: "AI / EI", italian: "È aperta (come in 'caffè')", note: "Lait (Latte), Neige (Neve)" }
+              ]
+          },
+          {
+              id: 'nasals',
+              title: "2. I Suoni Nasali (Il naso!)",
+              content: "I suoni nasali sono tipici del francese. L'aria deve passare dal naso. Il trucco è non pronunciare mai la 'N' finale, ma usarla per colorare la vocale precedente.",
+              examples: [
+                  { french: "AN / EN", italian: "A nasale (Bocca aperta, suono profondo)", note: "Maman, Enfant, Vent" },
+                  { french: "ON", italian: "O nasale (Labbra molto chiuse)", note: "Non, Bonbon, Maison" },
+                  { french: "IN / AIN / EIN", italian: "E nasale (Sorriso largo)", note: "Matin, Vin, Pain, Plein" },
+                  { french: "UN", italian: "OE nasale (Labbra avanti ma aperte)", note: "Un, Brun (suono raro oggi, spesso = IN)" }
+              ]
+          },
+          {
+              id: 'silent',
+              title: "3. Le Lettere Mute",
+              content: "La regola d'oro: la maggior parte delle consonanti alla fine della parola NON si leggono. Ricorda la regola del 'Deposito' (D, P, S, T, X, Z sono spesso mute).",
+              examples: [
+                  { french: "Paris", italian: "Si legge 'Parì'", note: "S finale muta" },
+                  { french: "Salut", italian: "Si legge 'Salù'", note: "T finale muta" },
+                  { french: "Beaucoup", italian: "Si legge 'Bocù'", note: "P finale muta" },
+                  { french: "H (Hôtel, Homme)", italian: "L'H è SEMPRE muta!", note: "Non si aspira mai" }
+              ]
+          },
+          {
+              id: 'special',
+              title: "4. Consonanti Speciali",
+              content: "Alcune combinazioni di consonanti hanno suoni specifici.",
+              examples: [
+                  { french: "CH", italian: "SC (come in 'sciare')", note: "Chat (Gatto), Chien (Cane)" },
+                  { french: "QU", italian: "K (la U non si legge mai!)", note: "Qui (Ki), Quatre (Katre)" },
+                  { french: "GN", italian: "GN (come in 'gnocco')", note: "Montagne, Gagner" },
+                  { french: "Ç (Cediglia)", italian: "S (rende dolce la C)", note: "Garçon, Français" },
+                  { french: "IL / ILLE", italian: "J (come in 'yoghurt')", note: "Famille, Soleil, Fille" }
+              ]
+          }
+      ]
+  },
+  [TopicId.GREETINGS]: {
+      title: "Saluti e Presentazioni",
+      description: "Le basi assolute: come salutare, chiedere come stai e presentarsi.",
+      sections: [
+          {
+              id: 'hello',
+              title: "1. Salutare",
+              content: "Esistono due modi principali di salutare: formale (sconosciuti, anziani, lavoro) e informale (amici, famiglia).",
+              examples: [
+                  { french: "Bonjour", italian: "Buongiorno (si usa tutto il giorno finché c'è luce)", note: "Formale e Standard" },
+                  { french: "Bonsoir", italian: "Buonasera", note: "Dopo le 18:00" },
+                  { french: "Salut", italian: "Ciao", note: "Informale (solo amici!)" },
+                  { french: "Au revoir", italian: "Arrivederci", note: "Standard" }
+              ]
+          },
+          {
+              id: 'how_are_you',
+              title: "2. Come stai?",
+              content: "La domanda più comune è 'Ça va?'. È magica perché vale sia come domanda che come risposta.",
+              examples: [
+                  { french: "Comment allez-vous ?", italian: "Come sta? (Lei)", note: "Formale" },
+                  { french: "Comment ça va ?", italian: "Come va?", note: "Standard" },
+                  { french: "Ça va ?", italian: "Tutto bene?", note: "Informale" },
+                  { french: "Ça va bien, merci.", italian: "Va bene, grazie.", note: "Risposta" }
+              ]
+          },
+          {
+              id: 'presentation',
+              title: "3. Presentarsi",
+              content: "Per dire il proprio nome si usa il verbo 'S'appeler' (Chiamarsi).",
+              examples: [
+                  { french: "Je m'appelle Marco.", italian: "Mi chiamo Marco.", note: "Presentazione" },
+                  { french: "Je suis italien / italienne.", italian: "Sono italiano / italiana.", note: "Nazionalità" },
+                  { french: "Enchanté(e)", italian: "Piacere", note: "Quando incontri qualcuno" }
+              ]
+          }
+      ]
+  },
+  [TopicId.ARTICLES]: {
+      title: "Articoli e Genere (Basi)",
+      description: "Il, La, Un, Una. Impara a identificare il genere delle parole.",
+      sections: [
+          {
+              id: 'definite',
+              title: "1. Articoli Determinativi (Il/La/I/Le)",
+              content: "Attenzione: in francese esistono solo due generi (Maschile e Femminile). Non c'è il neutro. Al plurale c'è un solo articolo per tutti!",
+              examples: [
+                  { french: "Le garçon", italian: "Il ragazzo", note: "Maschile Singolare" },
+                  { french: "La fille", italian: "La ragazza", note: "Femminile Singolare" },
+                  { french: "L'ami / L'école", italian: "L'amico / La scuola", note: "Davanti a vocale (L')" },
+                  { french: "Les garçons / Les filles", italian: "I ragazzi / Le ragazze", note: "Plurale (Unico!)" }
+              ]
+          },
+          {
+              id: 'indefinite',
+              title: "2. Articoli Indeterminativi (Un/Uno/Una)",
+              content: "Anche qui, il plurale 'Des' è fondamentale perché in italiano spesso lo omettiamo, ma in francese è obbligatorio!",
+              examples: [
+                  { french: "Un livre", italian: "Un libro", note: "Maschile" },
+                  { french: "Une pomme", italian: "Una mela", note: "Femminile" },
+                  { french: "Des livres", italian: "Dei libri (Alcuni libri)", note: "Plurale Obbligatorio" }
+              ]
+          },
+          {
+              id: 'gender_tips',
+              title: "3. Trucchi per il Genere",
+              content: "Come capire se una parola è maschile o femminile? Ci sono delle tendenze.",
+              examples: [
+                  { french: "La table, La lampe", italian: "Il tavolo, La lampada", note: "Spesso finiscono in -e" },
+                  { french: "Le bureau, Le moment", italian: "L'ufficio, Il momento", note: "Spesso consonante o -eau" },
+                  { french: "Le problème, Le système", italian: "Il problema, Il sistema", note: "Eccezione! Finiscono in -e ma sono Greci (Maschili)" }
+              ]
+          }
+      ]
+  },
+  [TopicId.NUMBERS]: {
+      title: "Numeri e Calendario",
+      description: "Contare fino a 100 e gestire le date.",
+      sections: [
+          {
+              id: '1_20',
+              title: "1. I Numeri da 0 a 20",
+              content: "La base di tutto. Imparali a memoria perché sono irregolari.",
+              examples: [
+                  { french: "Un, Deux, Trois", italian: "1, 2, 3", note: "" },
+                  { french: "Quatre, Cinq, Six", italian: "4, 5, 6", note: "Six si legge 'Siss'" },
+                  { french: "Sept, Huit, Neuf", italian: "7, 8, 9", note: "Sept si legge 'Set' (P muta)" },
+                  { french: "Dix, Onze, Douze", italian: "10, 11, 12", note: "" },
+                  { french: "Treize, Quatorze, Quinze", italian: "13, 14, 15", note: "" },
+                  { french: "Seize, Dix-sept, Dix-huit", italian: "16, 17, 18", note: "" },
+                  { french: "Dix-neuf, Vingt", italian: "19, 20", note: "Vingt si legge 'Ven' (GT muti)" }
+              ]
+          },
+          {
+              id: '20_69',
+              title: "2. Da 20 a 69 (La Logica)",
+              content: "È facile: Decina + Unità. Attenzione: per l'uno si aggiunge 'et' (Vingt-et-un). Per gli altri c'è il trattino.",
+              examples: [
+                  { french: "Vingt-et-un", italian: "Ventuno", note: "C'è 'et'" },
+                  { french: "Vingt-deux", italian: "Ventidue", note: "C'è il trattino" },
+                  { french: "Trente, Quarante", italian: "30, 40", note: "" },
+                  { french: "Cinquante, Soixante", italian: "50, 60", note: "" }
+              ]
+          },
+          {
+              id: '70_99',
+              title: "3. Il Disastro (70, 80, 90)",
+              content: "I francesi non hanno parole per 70, 80, 90. Usano la matematica!\n70 = 60+10 (Soixante-dix)\n80 = 4x20 (Quatre-vingts)\n90 = 4x20+10 (Quatre-vingt-dix)",
+              examples: [
+                  { french: "Soixante-dix", italian: "70 (Sessanta-dieci)", note: "" },
+                  { french: "Soixante-onze", italian: "71 (Sessanta-undici)", note: "" },
+                  { french: "Quatre-vingts", italian: "80 (Quattro-venti)", note: "Ha la S finale" },
+                  { french: "Quatre-vingt-un", italian: "81 (Quattro-venti-uno)", note: "Niente S, niente et" },
+                  { french: "Quatre-vingt-dix", italian: "90 (Quattro-venti-dieci)", note: "" }
+              ]
+          },
+          {
+              id: 'days',
+              title: "4. I Giorni della Settimana",
+              content: "Lundi, Mardi, Mercredi, Jeudi, Vendredi, Samedi, Dimanche.",
+              examples: [
+                  { french: "Aujourd'hui, c'est lundi.", italian: "Oggi è lunedì.", note: "" },
+                  { french: "À demain !", italian: "A domani!", note: "" }
+              ]
+          }
+      ]
+  },
   [TopicId.COD]: {
     title: "I Pronomi COD",
     description: "Evita le ripetizioni! Impara a usare le, la, les, l' come un vero francese.",
@@ -393,7 +571,7 @@ const courseContent: Record<TopicId, { title: string; description: string; secti
         {
             id: 'plural_irregular',
             title: "Plurali Irregolari",
-            content: "Alcuni nomi cambiano completamente al plurale. Non si aggiunge solo la 's'!",
+            content: "Alcuni nomi cambiano leggermente al plurale. Non si aggiunge solo la 's'!",
             examples: [
                 { french: "l'œil -> les yeux", italian: "l'occhio -> gli occhi", note: "Cambio totale" },
                 { french: "un travail -> des travaux", italian: "un lavoro -> dei lavori", note: "-ail diventa -aux" },
@@ -1125,11 +1303,13 @@ const getContextIcon = (text: string) => {
     if (t.includes('chant') || t.includes('musique')) return <Music size={24} className="text-teal-500"/>;
     if (t.includes('soleil') || t.includes('été') || t.includes('chaud')) return <Sun size={24} className="text-yellow-500"/>;
     if (t.includes('café') || t.includes('thé')) return <Coffee size={24} className="text-amber-800"/>;
-    if (t.includes('acheter') || t.includes('boutique') || t.includes('magasin') || t.includes('sac') || t.includes('vêtement') || t.includes('robe') || t.includes('pantalon')) return <ShoppingBag size={24} className="text-rose-500"/>;
-    if (t.includes('ami') || t.includes('parent') || t.includes('famille') || t.includes('enfant') || t.includes('gens')) return <Users size={24} className="text-cyan-600"/>;
-    if (t.includes('content') || t.includes('heureux') || t.includes('ravi')) return <Smile size={24} className="text-green-400"/>;
+    if (t.includes('acheter') || t.includes('boutique') || t.includes('magasin') || t.includes('sac') || t.includes('vêtement') || t.includes('robe') || t.includes('pantalon') || t.includes('coûte') || t.includes('euros')) return <ShoppingBag size={24} className="text-rose-500"/>;
+    if (t.includes('ami') || t.includes('parent') || t.includes('famille') || t.includes('enfant') || t.includes('gens') || t.includes('appelle')) return <Users size={24} className="text-cyan-600"/>;
+    if (t.includes('content') || t.includes('heureux') || t.includes('ravi') || t.includes('enchanté')) return <Smile size={24} className="text-green-400"/>;
     if (t.includes('heure') || t.includes('temps') || t.includes('matin') || t.includes('soir')) return <Clock size={24} className="text-slate-500"/>;
-    
+    if (t.includes('un') || t.includes('deux') || t.includes('trois') || t.includes('compter')) return <Calculator size={24} className="text-blue-500"/>;
+    if (t.includes('le') || t.includes('la') || t.includes('les') || t.includes('livre')) return <Box size={24} className="text-purple-400"/>;
+
     return <Zap size={24} className="text-yellow-400"/>; // Default
 };
 
@@ -1332,10 +1512,19 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
                 ))}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {lesson.examples.map((ex, idx) => (
+                  {lesson.examples.map((ex, idx) => {
+                    // INTELLIGENT AUDIO LOGIC
+                    // For Pronunciation module, if the main text is a short phoneme (e.g. "OI"), 
+                    // reading it directly is useless (reads letters O-I). 
+                    // We read the examples in the notes (e.g. "Moi, Toi") instead.
+                    const textToRead = (topicId === TopicId.PRONUNCIATION && ex.note && (ex.french.length <= 4 || ex.french.includes('/') || ex.french.includes('Cediglia')))
+                        ? ex.note.replace(/\s*\(.*?\)/g, '') // Remove (translation) to read only French words
+                        : ex.french;
+
+                    return (
                     <div 
                         key={idx} 
-                        onClick={() => playAudio(ex.french)}
+                        onClick={() => playAudio(textToRead)}
                         className="bg-slate-50 p-5 rounded-xl border border-slate-200 hover:border-french-blue hover:bg-blue-50/30 cursor-pointer transition-all group relative"
                     >
                       <div className="absolute -top-3 -right-3 bg-white p-2 rounded-full shadow-md border border-slate-100 group-hover:scale-110 transition-transform">
@@ -1346,7 +1535,7 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
                         <button 
                            onClick={(e) => {
                              e.stopPropagation();
-                             playAudio(ex.french);
+                             playAudio(textToRead);
                            }}
                            className="opacity-100 md:opacity-0 group-hover:opacity-100 text-xs bg-white border border-slate-200 hover:bg-slate-100 px-3 py-1 rounded-full text-slate-600 transition-all shadow-sm"
                         >
@@ -1361,7 +1550,8 @@ const LearnView: React.FC<LearnViewProps> = ({ topicId, onBack }) => {
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}

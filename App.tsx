@@ -10,16 +10,40 @@ import { Sparkles, BookOpen, MessageSquare, Lock, ArrowRight, Check } from 'luci
 // Course Data
 const modules: ModuleData[] = [
     {
-        id: TopicId.COD,
-        title: "1. Pronomi COD",
-        description: "Impara a dire 'Lo mangio', 'La guardo' invece di ripetere i nomi.",
-        icon: "🍎",
+        id: TopicId.PRONUNCIATION,
+        title: "0. Basi di Pronuncia",
+        description: "I segreti per leggere e parlare come un vero francese: vocali, nasali e lettere mute.",
+        icon: "👄",
         unlocked: true,
-        progress: 80
+        progress: 10
+    },
+    {
+        id: TopicId.GREETINGS,
+        title: "1. Saluti e Presentazioni",
+        description: "Bonjour, Comment ça va? Impara a salutare e presentarti in ogni situazione.",
+        icon: "👋",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.ARTICLES,
+        title: "2. Articoli e Genere Base",
+        description: "Le, La, Un, Une. Le basi essenziali per costruire le prime frasi.",
+        icon: "🧱",
+        unlocked: true,
+        progress: 0
+    },
+    {
+        id: TopicId.NUMBERS,
+        title: "3. Numeri e Calendario",
+        description: "Conta fino a 100 (attento al 70 e all'80!) e i giorni della settimana.",
+        icon: "🔢",
+        unlocked: true,
+        progress: 0
     },
     {
         id: TopicId.VERBI_ER,
-        title: "2. Verbi in -ER (1° Gr.)",
+        title: "4. Verbi in -ER (1° Gr.)",
         description: "Parler, Manger, Aimer. Il 90% dei verbi francesi è qui.",
         icon: "🗣️",
         unlocked: true,
@@ -27,15 +51,23 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.VERBI_TOP,
-        title: "3. I Fantastici 4 (Irregolari)",
+        title: "5. I Fantastici 4 (Irregolari)",
         description: "Essere, Avere, Andare, Fare. I pilastri della lingua francese.",
         icon: "👑",
         unlocked: true,
         progress: 0
     },
     {
+        id: TopicId.COD,
+        title: "6. Pronomi COD",
+        description: "Impara a dire 'Lo mangio', 'La guardo' invece di ripetere i nomi.",
+        icon: "🍎",
+        unlocked: true,
+        progress: 80
+    },
+    {
         id: TopicId.VERBI_IR, 
-        title: "4. Verbi in -IR (2° Gr.)",
+        title: "7. Verbi in -IR (2° Gr.)",
         description: "Finir, Choisir, Grossir. Il segreto è nel ponte 'ISS'.",
         icon: "🚀",
         unlocked: true,
@@ -43,7 +75,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.VERBI_3_GROUP,
-        title: "5. Altri Irregolari (3° Gr.)",
+        title: "8. Altri Irregolari (3° Gr.)",
         description: "Partir, Prendre, Pouvoir. Il gruppo del caos (e i più utili).",
         icon: "⚡",
         unlocked: true,
@@ -51,7 +83,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.FAMILY,
-        title: "6. La Famiglia",
+        title: "9. La Famiglia",
         description: "Genitori, nonni, cugini. Tutto il lessico della parentela.",
         icon: "👨‍👩‍👧‍👦",
         unlocked: true,
@@ -59,7 +91,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.DESCRIPTION,
-        title: "7. Descrizione e Abiti",
+        title: "10. Descrizione e Abiti",
         description: "Sei alto o basso? Cosa indossi? Descrivere persone e animali.",
         icon: "👗",
         unlocked: true,
@@ -67,7 +99,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.NEGATION,
-        title: "8. La Forma Negativa",
+        title: "11. La Forma Negativa",
         description: "Non, pas, jamais. Impara a negare correttamente e la regola del 'de'.",
         icon: "⛔",
         unlocked: true,
@@ -75,7 +107,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.GENDER_NUMBER,
-        title: "9. Maschile, Femminile, Plurale",
+        title: "12. Maschile, Femminile, Plurale",
         description: "Beau/Belle, Oeil/Yeux. Le irregolarità che devi conoscere.",
         icon: "🎭", // Using a string identifier that we'll render as icon or emoji
         unlocked: true,
@@ -83,7 +115,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.IMPERATIF,
-        title: "10. L'Imperativo",
+        title: "13. L'Imperativo",
         description: "Dai ordini e consigli. Attenzione: qui i pronomi cambiano posto!",
         icon: "👉",
         unlocked: true,
@@ -91,7 +123,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.ORIENTATION,
-        title: "11. Orientamento",
+        title: "14. Orientamento",
         description: "Scusi, per andare alla stazione? Impara a chiedere e dare indicazioni.",
         icon: "🗺️",
         unlocked: true,
@@ -99,7 +131,7 @@ const modules: ModuleData[] = [
     },
     {
         id: TopicId.LYON, 
-        title: "12. Culture: Lyon",
+        title: "15. Culture: Lyon",
         description: "Un viaggio tra i fiumi, la gastronomia e il quartiere moderno Confluence.",
         icon: "🏙️",
         unlocked: true,

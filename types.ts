@@ -7,6 +7,10 @@ export enum ViewState {
 }
 
 export enum TopicId {
+  PRONUNCIATION = 'PRONUNCIATION',
+  GREETINGS = 'GREETINGS',
+  ARTICLES = 'ARTICLES',
+  NUMBERS = 'NUMBERS',
   COD = 'COD',
   IMPERATIF = 'IMPERATIF',
   VERBI_ER = 'VERBI_ER',

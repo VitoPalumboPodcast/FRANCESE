@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Send, Bot, User, ArrowLeft, RefreshCw, Mic, MicOff, AlertCircle, Dumbbell, ShieldAlert, MessageCircle, MapPin, Compass, Frown, Scissors, Heart, Zap, Home, Search, Crown, GraduationCap } from 'lucide-react';
+import { Send, Bot, User, ArrowLeft, RefreshCw, Mic, MicOff, AlertCircle, Dumbbell, ShieldAlert, MessageCircle, MapPin, Compass, Frown, Scissors, Heart, Zap, Home, Search, Crown, GraduationCap, Music, Hand, ShoppingCart, BookOpen } from 'lucide-react';
 import { getTutorResponse } from '../services/geminiService';
 import { TopicId } from '../types';
 
@@ -61,6 +61,50 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ text, isUser, correction }) => 
 
 // Persona Configuration
 const PERSONAS = {
+    [TopicId.PRONUNCIATION]: {
+        name: "Madame Phonétique",
+        role: "Logopedista",
+        icon: <Music />,
+        openers: [
+            "Bonjour ! Prêt pour la gymnastique de la bouche ? Répète : 'Un chasseur sachant chasser sans son chien...'",
+            "Salut ! Aujourd'hui, on travaille le son 'R'. Répète après moi : 'La roue rouge roule sur la route'.",
+            "Attention aux nasales ! Dis-moi : 'Un bon vin blanc'. Je t'écoute !",
+            "Le son 'U' est difficile. Essaie de dire : 'Tu as vu la lune au-dessus de la rue ?'"
+        ]
+    },
+    [TopicId.GREETINGS]: {
+        name: "Pierre le Portier",
+        role: "Concierge dell'Hotel",
+        icon: <Hand />,
+        openers: [
+            "Bonjour Monsieur/Madame ! Bienvenue au Grand Hôtel. Comment allez-vous ?",
+            "Bonsoir ! Je m'appelle Pierre. Et vous, comment vous appelez-vous ?",
+            "Enchanté ! C'est votre première fois à Paris ? (Rispondi presentandoti)",
+            "Au revoir et bonne journée ! (Prova a salutarmi in modo formale)"
+        ]
+    },
+    [TopicId.ARTICLES]: {
+        name: "Professeur Plume",
+        role: "Maestra Elementare",
+        icon: <BookOpen />,
+        openers: [
+            "Bonjour ! Regarde les objets sur la table. C'est UN livre ou UNE livre ? (Usa un/une)",
+            "Voici des animaux. Tu vois LE chat ou LA chatte ? Attention al genere !",
+            "Dans mon sac, j'ai DES stylos. Et toi, qu'est-ce que tu as ? (Usa un/une/des)",
+            "Attention ! Si je dis 'L'école', c'est masculin ou féminin ? Dis-moi..."
+        ]
+    },
+    [TopicId.NUMBERS]: {
+        name: "Mathieu le Marchand",
+        role: "Venditore al Mercato",
+        icon: <ShoppingCart />,
+        openers: [
+            "Bonjour ! Les pommes coûtent 2 euros le kilo. Tu en veux combien ? (Usa i numeri)",
+            "C'est mon anniversaire le 14 juillet. Et toi, c'est quand ton anniversaire ?",
+            "Ça fait 75 euros s'il vous plaît ! (Attento: come si scrive settantacinque?)",
+            "Il est quelle heure ? Moi j'ouvre à 8 heures. (Dimmi l'ora)"
+        ]
+    },
     [TopicId.COD]: {
         name: "Pierre Curieux",
         role: "Robot Pettegolo",
@@ -448,85 +492,70 @@ const RoleplayView: React.FC<RoleplayViewProps> = ({ topicId, onBack }) => {
            </div>
          </div>
          <button onClick={handleReset} className="text-slate-400 hover:text-slate-600 p-2" title="Nuova Conversazione">
-            <RefreshCw size={18} />
+            <RefreshCw size={20} />
          </button>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-grow overflow-y-auto p-4 md:p-6 z-10">
-        {messages.map((m, idx) => (
-          <ChatBubble key={idx} text={m.text} isUser={m.role === 'user'} correction={m.correction} />
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 space-y-4">
+        {messages.map((msg, idx) => (
+          <ChatBubble key={idx} text={msg.text} isUser={msg.role === 'user'} correction={msg.correction} />
         ))}
         {isLoading && (
-          <div className="flex items-center gap-2 text-slate-400 text-sm ml-16 mb-4">
-            <span className="text-xs font-bold uppercase tracking-widest mr-2">{persona.name} sta scrivendo</span>
-            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75"></div>
-            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150"></div>
+          <div className="flex justify-start animate-pulse mb-6">
+             <div className="w-10 h-10 bg-slate-200 rounded-full mr-3"></div>
+             <div className="bg-slate-200 h-12 w-32 rounded-3xl"></div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-slate-200 z-10">
-        {errorMsg && (
-           <div className="mb-2 flex items-center text-red-600 text-xs font-bold bg-red-50 p-2 rounded-lg animate-in slide-in-from-bottom-2">
-             <AlertCircle size={14} className="mr-2" />
-             {errorMsg}
-           </div>
-        )}
-        <div className="flex gap-2 relative max-w-3xl mx-auto items-center">
-          <div className="relative w-full">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder={isListening ? "" : "Scrivi la tua risposta..."}
-                disabled={isListening}
-                className={`w-full pl-6 pr-14 py-4 rounded-full focus:ring-2 outline-none transition-all border border-transparent shadow-inner text-base
-                    ${isListening 
-                        ? 'bg-red-50 text-transparent' // Hide text when listening to show visualizer
-                        : 'bg-slate-100 focus:bg-white focus:ring-french-blue text-slate-800'}`}
-              />
-              
-              {isListening && (
-                  <div className="absolute left-6 top-0 bottom-0 flex items-center gap-1.5 pointer-events-none">
-                      <span className="text-red-500 text-xs font-bold uppercase mr-2 animate-pulse">Enregistrement...</span>
-                      {[...Array(8)].map((_, i) => (
-                          <div 
-                            key={i} 
-                            className="w-1 bg-red-400 rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" 
-                            style={{ 
-                                height: `${Math.random() * 16 + 8}px`, 
-                                animationDelay: `${i * 0.05}s` 
-                            }} 
-                          />
-                      ))}
-                  </div>
-              )}
-              
-              <button
-                onClick={toggleListening}
-                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-200 z-10
-                    ${isListening 
-                        ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,65,53,0.6)] scale-110' 
-                        : 'text-slate-400 hover:bg-slate-200'}`}
-                title="Parla in francese"
-              >
-                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-              </button>
-          </div>
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 md:p-6 pb-8 z-20">
+         {errorMsg && (
+            <div className="absolute -top-12 left-0 right-0 mx-auto w-max max-w-[90%] bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm animate-in slide-in-from-bottom-2">
+                <AlertCircle size={14}/> {errorMsg}
+            </div>
+         )}
 
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="w-12 h-12 shrink-0 bg-french-blue text-white rounded-full flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md hover:scale-105 active:scale-95"
-          >
-            <Send size={20} />
-          </button>
-        </div>
+         <div className="max-w-3xl mx-auto flex items-end gap-3">
+             <button
+                onClick={toggleListening}
+                className={`p-4 rounded-full transition-all duration-300 shadow-sm border ${
+                    isListening 
+                    ? 'bg-red-500 text-white border-red-500 animate-pulse scale-110' 
+                    : 'bg-white text-slate-500 border-slate-300 hover:bg-slate-50'
+                }`}
+             >
+                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+             </button>
+
+             <div className="flex-1 bg-slate-100 rounded-3xl flex items-center p-2 border border-slate-200 focus-within:ring-2 focus-within:ring-french-blue/20 focus-within:border-french-blue transition-all">
+                <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                        if(e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                        }
+                    }}
+                    placeholder={`Parla con ${persona.name}...`}
+                    className="w-full bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[48px] py-3 px-3 text-slate-700 placeholder:text-slate-400"
+                    rows={1}
+                />
+                <button 
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isLoading}
+                    className="p-3 bg-french-blue text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md ml-2"
+                >
+                    <Send size={20} />
+                </button>
+             </div>
+         </div>
+         <p className="text-center text-xs text-slate-400 mt-3 hidden md:block">
+            L'AI analizzerà la tua grammatica in tempo reale.
+         </p>
       </div>
     </div>
   );

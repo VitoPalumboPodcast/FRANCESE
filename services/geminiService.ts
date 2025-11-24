@@ -40,8 +40,7 @@ export const generateQuizQuestions = async (topic: TopicId, level: UserLevel, co
   };
 
   let topicContext = "";
-  // ... (Context mapping remains the same, omitted for brevity but assumed present in full implementation)
-  // Re-mapping just to be safe for the XML output context
+  // Context mapping
   if (topic === TopicId.IMPERATIF) topicContext = "French Imperative Mode.";
   else if (topic === TopicId.COD) topicContext = "French Direct Object Pronouns (COD).";
   else if (topic === TopicId.VERBI_ER) topicContext = "French 1st Group Verbs (-ER).";
@@ -54,6 +53,10 @@ export const generateQuizQuestions = async (topic: TopicId, level: UserLevel, co
   else if (topic === TopicId.GENDER_NUMBER) topicContext = "French Irregular Gender and Number.";
   else if (topic === TopicId.FAMILY) topicContext = "French Family Vocabulary.";
   else if (topic === TopicId.DESCRIPTION) topicContext = "French Descriptions and Clothing.";
+  else if (topic === TopicId.PRONUNCIATION) topicContext = "French Pronunciation Basics (Phonetics, Nasals, Silent letters).";
+  else if (topic === TopicId.GREETINGS) topicContext = "French Greetings, Introductions, and Politeness (Bonjour, Comment ça va, Je m'appelle).";
+  else if (topic === TopicId.ARTICLES) topicContext = "French Definite and Indefinite Articles (Le, La, Les, Un, Une, Des).";
+  else if (topic === TopicId.NUMBERS) topicContext = "French Numbers (1-100), Days of the Week, Months.";
 
   // Cognitive Load Adaptation Logic
   let levelInstruction = "";
@@ -132,11 +135,14 @@ export const getTutorResponse = async (history: {role: string, parts: {text: str
     `;
 
     let personaInstruction = "";
-    // (Persona mapping remains same, keeping simplified for XML)
+    
+    // Mapping Personas
     if (topic === TopicId.IMPERATIF) personaInstruction = `Sei "Sergent Pierre".`; 
     else if (topic === TopicId.COD) personaInstruction = `Sei "Pierre Curieux".`;
-    // ... Assume other personas are preserved in actual file ...
-    // Just ensuring the export is correct
+    else if (topic === TopicId.PRONUNCIATION) personaInstruction = `Sei "Madame Phonétique". Aiuta l'utente con la pronuncia e i suoni difficili (R, U, Nasali). Proponi scioglilingua.`;
+    else if (topic === TopicId.GREETINGS) personaInstruction = `Sei "Pierre le Portier". Un portiere di hotel molto gentile e formale. Insegna i saluti (Bonjour, Bonsoir, Enchanté) e come presentarsi.`;
+    else if (topic === TopicId.ARTICLES) personaInstruction = `Sei "Professeur Plume". Una maestra elementare dolce ma precisa. Correggi sempre se l'utente sbaglia genere (Le/La) o numero.`;
+    else if (topic === TopicId.NUMBERS) personaInstruction = `Sei "Mathieu le Marchand". Un venditore al mercato. Chiedi prezzi, quantità e date. Fai esercitare l'utente sui numeri (costa 20 euro, ne voglio 3, etc.).`;
     
     const chat = ai.chats.create({
         model: 'gemini-2.5-flash',
